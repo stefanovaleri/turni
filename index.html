@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#462678">
+<title>Turni Squadriglie</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* Palette dal Manuale Immagine Coordinata AGESCI 2016 */
+  :root {
+    --viola-scuro: #211638; --viola: #462678; --viola-medio: #6B478D; --lilla: #AEB0D9;
+    --eg: #21A067; --grigio: #ECE9E6;
+    --bg: var(--grigio); --card: #ffffff; --text: var(--viola-scuro); --muted: #6e6680;
+    --title: var(--viola); --border: #ddd8e3; --past: #f4f2f0; --ring: var(--viola);
+    --icon-stroke: var(--viola-scuro);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #140d24; --card: var(--viola-scuro); --text: var(--grigio); --muted: var(--lilla);
+      --title: var(--lilla); --border: #3a2d57; --past: #1a1230;
+      --icon-stroke: var(--grigio);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 Roboto, Tahoma, system-ui, sans-serif;
+  }
+  .band {
+    height: 10px; background: var(--viola);
+    background-image: repeating-linear-gradient(-67.5deg, transparent 0 3px, rgba(255,255,255,.12) 3px 4px);
+  }
+  main { max-width: 520px; margin: 0 auto; padding: 16px 16px 48px; }
+  header { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
+  .logo-chip {
+    width: 60px; height: 60px; flex: none; border-radius: 50%; background: #fff;
+    display: grid; place-items: center; font-size: 34px;
+  }
+  .logo-chip img { width: 52px; height: 52px; object-fit: contain; }
+  h1, h2, .date { font-family: "Roboto Slab", Georgia, serif; }
+  header h1 { font-size: 1.45rem; margin: 0; color: var(--title); }
+  header p { margin: 0; color: var(--muted); font-size: .9rem; }
+  h2 { font-size: 1rem; color: var(--title); font-weight: 700; margin: 28px 0 8px; }
+  .card {
+    display: block; width: 100%; text-align: left; font: inherit; color: inherit;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-bottom: 10px;
+  }
+  button.card { cursor: pointer; }
+  .card.past { background: var(--past); opacity: .75; }
+  .card.selected { outline: 2px solid var(--viola-medio); }
+  .date { font-weight: 700; font-size: 1.15rem; }
+  .label { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--eg); font-weight: 700; }
+
+  .ico { width: 22px; height: 22px; flex: none; }
+  .ico .shadow { fill: var(--lilla); stroke: none; }
+  .ico .line { fill: none; stroke: var(--icon-stroke); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+  .wheel-box { position: relative; width: 100%; max-width: 340px; margin: 12px auto 4px; aspect-ratio: 1; cursor: pointer; }
+  .wheel-box svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .hub {
+    position: absolute; left: 50%; top: 50%; width: 20%; height: 20%; transform: translate(-50%, -50%);
+    border-radius: 50%; background: #fff; border: 3px solid var(--ring);
+    display: grid; place-items: center; pointer-events: none; font-size: 30px;
+  }
+  .hub img { width: 84%; height: 84%; object-fit: contain; }
+  .hint { text-align: center; color: var(--muted); font-size: .85rem; margin: 0; }
+
+  .result { transition: opacity .4s; }
+  .result.hidden { opacity: 0; pointer-events: none; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .slot { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; border-left: 6px solid var(--c); }
+  .slot .turno { font-size: .85rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .slot .sq { font-weight: 700; margin-top: 2px; }
+  .compact .date { font-size: 1rem; margin-bottom: 6px; }
+  .compact .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 2px 0; font-size: .95rem; }
+  .compact .row span:first-child { display: flex; align-items: center; gap: 6px; }
+  .share {
+    font: inherit; border: 0; border-radius: 10px; cursor: pointer;
+    padding: 12px 16px; width: 100%; margin-top: 12px;
+    background: #25d366; color: #0b2e17; font-weight: 700;
+  }
+  .link { font: inherit; background: none; border: 0; cursor: pointer; color: var(--title); padding: 8px 0; font-weight: 500; }
+  .card.off { background: var(--past); }
+  .ico.big { width: 44px; height: 44px; }
+  .ev-title { display: flex; align-items: center; gap: 12px; margin: 16px 0 4px;
+    font-family: "Roboto Slab", Georgia, serif; font-size: 1.35rem; font-weight: 700; color: var(--title); }
+  .ev-note { color: var(--muted); font-size: .95rem; }
+  .muted { color: var(--muted); }
+  .msg { color: var(--muted); font-size: .9rem; }
+  .err { color: #E74030; }
+</style>
+</head>
+<body>
+<div class="band"></div>
+<main>
+  <header>
+    <div class="logo-chip"><img src="logo.png" alt="AGESCI" onerror="this.outerHTML='⚜️'"></div>
+    <div>
+      <h1>Turni Squadriglie</h1>
+      <p id="reparto"></p>
+    </div>
+  </header>
+  <div id="app"><p class="msg">Caricamento…</p></div>
+</main>
+
+<script>
+// ===== Configurazione =====
+// Link CSV del Google Sheet: File > Condividi > Pubblica sul web > (foglio) > CSV.
+// Se vuoto, la pagina legge il file calendario.csv accanto a index.html.
+// Colonne: Data, Fino al (facoltativa, per eventi di più giorni), Evento, Note.
+// Le righe con Evento "Attività" (o vuoto) sono riunioni con i turni e solo loro
+// fanno girare la rotazione; ogni altro evento (uscita, NO ATTIVITÀ, fiera…) si
+// vede al posto della ruota.
+const SHEET_CSV_URL = "";
+const CSV_LOCALE = "calendario.csv";
+
+// Sottotitolo sotto il titolo (es. il nome del reparto); vuoto per nasconderlo.
+const REPARTO = "";
+
+// Emblema AGESCI al centro della ruota e nell'intestazione. Il manuale non permette
+// di modificarne forma o colori e chiede uno sfondo neutro: per questo sta su bianco.
+const LOGO = "logo.png";
+
+// Alla prima riunione del foglio la squadriglia i-esima ha il turno i-esimo;
+// a ogni riunione successiva ognuna passa al turno seguente.
+// Colori dalla palette AGESCI; `testo` è il colore delle scritte sulla ruota.
+const SQUADRIGLIE = [
+  { nome: "Volpi", emoji: "🦊", colore: "#E74030", testo: "#fff" },
+  { nome: "Puma",  emoji: "🐆", colore: "#FDC500", testo: "#211638" },
+  { nome: "Corvi", emoji: "🐦‍⬛", colore: "#000000", testo: "#fff" },
+  { nome: "Cobra", emoji: "🐍", colore: "#21A067", testo: "#fff" },
+];
+// `icona` sceglie il disegno da ICONE; `emoji` si usa nel messaggio WhatsApp.
+const TURNI = [
+  { nome: "Pulizie",     emoji: "🧹", icona: "scopa" },
+  { nome: "Merenda",     emoji: "🍪", icona: "tazza" },
+  { nome: "Diario",      emoji: "📔", icona: "diario" },
+  { nome: "Da definire", emoji: "❓", icona: "domanda" },
+];
+const APPUNTAMENTI_FUTURI_MOSTRATI = 5;
+// ==========================
+
+// Icone nello stile del manuale: tratto a penna con ombra lilla sfalsata.
+// `shadow` è la sagoma piena (spostata di 2,2), `line` il disegno.
+const ICONE = {
+  scopa: {
+    shadow: "M6 12 L13 15.5 L10 21.5 L2.5 18 Z",
+    line: "M19 2.5 L10.5 13.5 M6 12 L13 15.5 L10 21.5 L2.5 18 Z M5 17.5 L7.5 14 M7.5 19 L10 15",
+  },
+  tazza: {
+    shadow: "M4.5 10 H15.5 V17 A3.5 3.5 0 0 1 12 20.5 H8 A3.5 3.5 0 0 1 4.5 17 Z",
+    line: "M4.5 10 H15.5 V17 A3.5 3.5 0 0 1 12 20.5 H8 A3.5 3.5 0 0 1 4.5 17 Z M15.5 12 H17.5 A2.2 2.2 0 0 1 17.5 16.4 H15.5 M8 3.5 Q9.5 5 8 6.8 M12 3.5 Q13.5 5 12 6.8",
+  },
+  diario: {
+    shadow: "M5 3 H17.5 A1 1 0 0 1 18.5 4 V20 A1 1 0 0 1 17.5 21 H5 Z",
+    line: "M5 3 H17.5 A1 1 0 0 1 18.5 4 V20 A1 1 0 0 1 17.5 21 H5 Z M8.5 3 V21 M11.5 8 H15.5 M11.5 11 H15.5 M5 6.5 H3.5 M5 10.5 H3.5 M5 14.5 H3.5",
+  },
+  domanda: {
+    shadow: "M12 3.5 A8.5 8.5 0 1 1 11.99 3.5 Z",
+    line: "M12 3.5 A8.5 8.5 0 1 1 11.99 3.5 Z M9.5 9.5 A2.6 2.6 0 1 1 13.3 11.8 C12.5 12.2 12 12.8 12 13.8 V14.3 M12 17.3 V17.4",
+  },
+  tenda: {
+    shadow: "M2.5 19.5 L8.5 6 L17.5 5 L21.5 18.5 L14.5 19.5 Z",
+    line: "M2.5 19.5 L8.5 6 L14.5 19.5 Z M8.5 6 L17.5 5 L21.5 18.5 L14.5 19.5 M8.5 12 L6.5 19.5 M8.5 12 L10.5 19.5",
+  },
+  calendario: {
+    shadow: "M3.5 6 H20.5 V20.5 H3.5 Z",
+    line: "M3.5 6 H20.5 V20.5 H3.5 Z M3.5 10 H20.5 M8 3.5 V7.5 M16 3.5 V7.5 M7.5 14 H9.5 M11 14 H13 M14.5 14 H16.5 M7.5 17 H9.5 M11 17 H13",
+  },
+  riposo: {
+    shadow: "M3.5 6 H20.5 V20.5 H3.5 Z",
+    line: "M3.5 6 H20.5 V20.5 H3.5 Z M3.5 10 H20.5 M8 3.5 V7.5 M16 3.5 V7.5 M9 12.5 L15 18.5 M15 12.5 L9 18.5",
+  },
+};
+
+function iconSvg(nome, cls = "") {
+  const ic = ICONE[nome];
+  if (!ic) return "";
+  return `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">` +
+    `<path class="shadow" d="${ic.shadow}" transform="translate(2 2)"/><path class="line" d="${ic.line}"/></svg>`;
+}
+
+const CACHE_KEY = "turni-csv";
+const N = TURNI.length;
+
+function parseDate(s) {
+  s = s.trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(+m[1], m[2] - 1, +m[3]);
+  m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);
+  if (m) {
+    const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+    return new Date(y, m[2] - 1, +m[1]);
+  }
+  return null;
+}
+
+// Righe e celle di un CSV, rispettando i campi tra virgolette.
+function csvRows(text) {
+  const rows = [];
+  let row = [], cell = "", quoted = false;
+  for (let k = 0; k < text.length; k++) {
+    const c = text[k];
+    if (quoted) {
+      if (c === '"' && text[k + 1] === '"') { cell += '"'; k++; }
+      else if (c === '"') quoted = false;
+      else cell += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[k + 1] === "\n") k++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+const haTurni = evento => !evento || /^attivit/i.test(evento);
+const nessunaAttivita = evento => /^(no|nessuna)\b/i.test(evento);
+
+// Le colonne si riconoscono dall'intestazione, se c'è; altrimenti vale l'ordine
+// Data, Fino al, Evento, Note. Le righe senza una data valida vengono ignorate.
+// Ogni riunione con turni riceve il suo numero `n` nella rotazione.
+function parseCsv(text) {
+  const rows = csvRows(text);
+  const col = { data: 0, fine: 1, evento: 2, note: 3 };
+  if (rows.length && !parseDate(rows[0][0] || "")) {
+    rows[0].forEach((h, k) => {
+      h = h.trim().toLowerCase();
+      if (/fino|fine/.test(h)) col.fine = k;
+      else if (/data/.test(h)) col.data = k;
+      else if (/evento/.test(h)) col.evento = k;
+      else if (/note|orario/.test(h)) col.note = k;
+    });
+  }
+  const cell = (r, k) => (r[k] || "").trim();
+  const voci = rows
+    .map(r => ({
+      inizio: parseDate(cell(r, col.data)),
+      fine: parseDate(cell(r, col.fine)),
+      evento: cell(r, col.evento),
+      note: cell(r, col.note),
+    }))
+    .filter(v => v.inizio && !isNaN(v.inizio));
+  voci.sort((a, b) => a.inizio - b.inizio);
+  let n = 0;
+  voci.forEach(v => {
+    if (!v.fine || isNaN(v.fine) || v.fine < v.inizio) v.fine = v.inizio;
+    v.turni = haTurni(v.evento);
+    v.n = v.turni ? n++ : -1;
+  });
+  return voci;
+}
+
+// Restituisce [{turno, squadriglia}] per la riunione numero n.
+function assegnazioni(n) {
+  return TURNI.map((turno, t) => ({ turno, squadriglia: SQUADRIGLIE[((t - n) % N + N) % N] }));
+}
+
+const fmt = new Intl.DateTimeFormat("it-IT", { weekday: "long", day: "numeric", month: "long" });
+const fmtGiorno = new Intl.DateTimeFormat("it-IT", { weekday: "long", day: "numeric" });
+const maiuscola = s => s[0].toUpperCase() + s.slice(1);
+const fmtDate = d => maiuscola(fmt.format(d));
+function fmtPeriodo(v) {
+  if (v.fine - v.inizio === 0) return fmtDate(v.inizio);
+  const primo = v.inizio.getMonth() === v.fine.getMonth() ? fmtGiorno.format(v.inizio) : fmt.format(v.inizio);
+  return maiuscola(`${primo} – ${fmt.format(v.fine)}`);
+}
+const testo = x => `${x.emoji} ${x.nome}`;
+const titoloEvento = v => nessunaAttivita(v.evento) ? "Nessuna attività" : v.evento;
+const iconaEvento = v =>
+  nessunaAttivita(v.evento) ? "riposo" : /uscita|campo|route|hike/i.test(v.evento) ? "tenda" : "calendario";
+
+function esc(s) {
+  return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+// ----- Ruota -----
+// Anello esterno fisso con i turni (turno t centrato a t*360/N gradi, 0 = in alto);
+// disco interno con le squadriglie che ruota di n*360/N gradi alla riunione n.
+const C = 110, STEP = 360 / N;
+const xy = (r, deg) => {
+  const a = deg * Math.PI / 180;
+  return [+(C + r * Math.sin(a)).toFixed(2), +(C - r * Math.cos(a)).toFixed(2)];
+};
+const pt = (r, deg) => xy(r, deg).join(" ");
+
+function wheelSvg() {
+  const ring = TURNI.map((t, k) => {
+    const a = k * STEP, r = 91;
+    // nella metà inferiore l'arco va percorso al contrario, così il testo non è capovolto
+    const bottom = a > 90 && a < 270;
+    const d = bottom
+      ? `M ${pt(r, a + STEP / 2 - 5)} A ${r} ${r} 0 0 0 ${pt(r, a - STEP / 2 + 5)}`
+      : `M ${pt(r, a - STEP / 2 + 5)} A ${r} ${r} 0 0 1 ${pt(r, a + STEP / 2 - 5)}`;
+    const [x1, y1] = xy(78, a + STEP / 2), [x2, y2] = xy(104, a + STEP / 2);
+    return `<path id="arc${k}" d="${d}" fill="none"/>
+      <text font-family="'Roboto Slab', Georgia, serif" font-size="10.5" font-weight="700" fill="#fff"
+            letter-spacing=".6" dominant-baseline="middle">
+        <textPath href="#arc${k}" startOffset="50%" text-anchor="middle">${esc(t.nome.toUpperCase())}</textPath></text>
+      <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#AEB0D9" stroke-width="1"/>
+      <path d="M ${pt(84, a - 5)} L ${pt(75, a)} L ${pt(84, a + 5)} Z" fill="#fff" stroke="var(--ring)" stroke-width="1"/>`;
+  }).join("");
+
+  const sectors = SQUADRIGLIE.map((s, j) => {
+    const a = j * STEP, [x, y] = xy(47, a);
+    return `<path d="M ${C} ${C} L ${pt(78, a - STEP / 2)} A 78 78 0 0 1 ${pt(78, a + STEP / 2)} Z"
+              fill="${s.colore}" stroke="#fff" stroke-width="1.5"/>
+      <g class="upright" data-x="${x}" data-y="${y}">
+        <text x="${x}" y="${y - 7}" font-size="21" text-anchor="middle">${s.emoji}</text>
+        <text x="${x}" y="${y + 9}" font-family="'Roboto Slab', Georgia, serif" font-size="10" font-weight="700"
+              fill="${s.testo}" text-anchor="middle">${esc(s.nome)}</text>
+      </g>`;
+  }).join("");
+
+  // texture a righe inclinate di 22,5°, come l'angolo di costruzione del manuale
+  return `<svg viewBox="0 0 220 220" role="img" aria-label="Ruota dei turni">
+    <defs><pattern id="texture" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(22.5)">
+      <rect width="1" height="4" fill="rgba(255,255,255,.08)"/></pattern></defs>
+    <circle cx="${C}" cy="${C}" r="104" fill="var(--ring)"/>
+    <circle cx="${C}" cy="${C}" r="104" fill="url(#texture)"/>
+    <g class="spin">${sectors}</g>
+    ${ring}
+  </svg>`;
+}
+
+let angle = 0;
+
+// Ruota il disco attorno al centro della ruota e ogni etichetta in senso opposto
+// attorno al proprio punto, così le scritte restano dritte. Centri espliciti:
+// con transform-origin/transform-box Chrome ruotava attorno al punto sbagliato.
+function setAngle(box, deg) {
+  box.querySelector(".spin").setAttribute("transform", `rotate(${deg} ${C} ${C})`);
+  box.querySelectorAll(".upright").forEach(g =>
+    g.setAttribute("transform", `rotate(${-deg} ${g.dataset.x} ${g.dataset.y})`));
+}
+
+// Fa girare il disco fino alla posizione della riunione n (sempre in avanti, almeno 4 giri).
+function spinTo(n, onStop) {
+  const box = document.getElementById("wheel");
+  const from = angle;
+  angle = angle - (angle % 360) + 360 * 4 + ((n % N) + N) % N * STEP;
+  const to = angle;
+  const duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 4500;
+  const start = performance.now();
+  const frame = now => {
+    const t = duration ? Math.min(1, (now - start) / duration) : 1;
+    setAngle(box, from + (to - from) * (1 - Math.pow(1 - t, 4)));
+    if (t < 1) requestAnimationFrame(frame); else onStop();
+  };
+  requestAnimationFrame(frame);
+}
+
+// ----- Pagina -----
+function cardHtml(v, k, cls) {
+  const corpo = v.turni
+    ? assegnazioni(v.n).map(r => `<div class="row"><span>${iconSvg(r.turno.icona)}${esc(r.turno.nome)}</span><span>${esc(testo(r.squadriglia))}</span></div>`).join("")
+    : `<div class="row"><span>${iconSvg(iconaEvento(v))}${esc(titoloEvento(v))}</span><span class="muted">${esc(v.note)}</span></div>`;
+  const off = !v.turni && nessunaAttivita(v.evento) ? "off" : "";
+  return `<button class="card compact ${cls} ${off}" data-k="${k}">
+    <div class="date">${esc(fmtPeriodo(v))}</div>${corpo}
+  </button>`;
+}
+
+function messaggio(v) {
+  const link = `\n\n${location.href.split(/[?#]/)[0]}`;
+  if (!v.turni) {
+    if (nessunaAttivita(v.evento)) return `⚜️ ${fmtPeriodo(v)}: nessuna attività` + link;
+    return `⚜️ ${fmtPeriodo(v)}\n${v.evento}${v.note ? ` (${v.note})` : ""}` + link;
+  }
+  return `⚜️ Turni riunione di ${fmtPeriodo(v).toLowerCase()}${v.note ? ` (${v.note})` : ""}\n\n` +
+    assegnazioni(v.n).map(r => `${testo(r.turno)}: ${testo(r.squadriglia)}`).join("\n") + link;
+}
+
+// "Oggi", sovrascrivibile con ?oggi=AAAA-MM-GG per vedere come apparirà la pagina in un altro giorno.
+function oggi() {
+  const d = parseDate(new URLSearchParams(location.search).get("oggi") || "") || new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function render(voci, note) {
+  const app = document.getElementById("app");
+  if (!voci.length) {
+    app.innerHTML = `<p class="msg">Nessun appuntamento in calendario.</p>`;
+    return;
+  }
+  const today = oggi();
+  const next = voci.findIndex(v => v.fine >= today);
+  const indices = voci.map((_, k) => k);
+  const past = next === -1 ? indices : indices.slice(0, next);
+  const future = next === -1 ? [] : indices.slice(next + 1, next + 1 + APPUNTAMENTI_FUTURI_MOSTRATI);
+
+  let html = note ? `<p class="msg">${esc(note)}</p>` : "";
+  html += `<div id="detail"></div>`;
+  if (future.length) html += `<h2>Prossimi appuntamenti</h2>` + future.map(k => cardHtml(voci[k], k, "")).join("");
+  if (past.length) {
+    html += `<button class="link" id="togglePast">Mostra appuntamenti passati (${past.length})</button><div id="past" hidden>` +
+      past.slice().reverse().map(k => cardHtml(voci[k], k, "past")).join("") + `</div>`;
+  }
+  app.innerHTML = html;
+
+  const detail = document.getElementById("detail");
+  let shown = next === -1 ? voci.length - 1 : next;
+  let spinning = false;
+
+  function etichetta(k, v) {
+    if (k === next) return v.turni ? "Prossima riunione" : "Prossimo appuntamento";
+    if (k < next || next === -1) return v.turni ? "Riunione passata" : "Appuntamento passato";
+    return v.turni ? "Riunione futura" : "In programma";
+  }
+
+  function share(v) {
+    document.getElementById("share").onclick = () =>
+      window.open("https://wa.me/?text=" + encodeURIComponent(messaggio(v)), "_blank");
+  }
+
+  function show(k) {
+    if (spinning) return;
+    shown = k;
+    const v = voci[k];
+    document.querySelectorAll("button.card").forEach(b => b.classList.toggle("selected", +b.dataset.k === k));
+    const intestazione = `<div class="label">${etichetta(k, v)}</div>
+      <div class="date">${esc(fmtPeriodo(v))}</div>`;
+
+    if (!v.turni) {
+      const off = nessunaAttivita(v.evento);
+      detail.innerHTML = `<div class="card evento ${off ? "off" : ""}">${intestazione}
+        <div class="ev-title">${iconSvg(iconaEvento(v), "big")}<span>${esc(titoloEvento(v))}</span></div>
+        ${v.note ? `<div class="ev-note">${esc(v.note)}</div>` : ""}
+        <p class="msg">${off ? "Niente riunione, niente turni." : "Niente turni: la rotazione riprende alla prossima riunione."}</p>
+        <button class="share" id="share">Condividi su WhatsApp</button>
+      </div>`;
+      share(v);
+      return;
+    }
+
+    if (!document.getElementById("wheel")) {
+      angle = 0;
+      detail.innerHTML = `<div class="card">
+        <div id="wHead"></div>
+        <div class="wheel-box" id="wheel">${wheelSvg()}
+          <div class="hub"><img src="${esc(LOGO)}" alt="" onerror="this.outerHTML='⚜️'"></div>
+        </div>
+        <p class="hint">Tocca la ruota per farla girare</p>
+        <div class="result hidden" id="result"></div>
+      </div>`;
+      document.getElementById("wheel").onclick = () => show(shown);
+    }
+    document.getElementById("wHead").innerHTML = intestazione +
+      (v.note ? `<div class="ev-note">${esc(v.note)}</div>` : "");
+    const result = document.getElementById("result");
+    result.classList.add("hidden");
+    spinning = true;
+    spinTo(v.n, () => {
+      spinning = false;
+      result.innerHTML = `<div class="grid">${assegnazioni(v.n).map(r =>
+        `<div class="slot" style="--c:${r.squadriglia.colore}"><div class="turno">${iconSvg(r.turno.icona)}${esc(r.turno.nome)}</div><div class="sq">${esc(testo(r.squadriglia))}</div></div>`).join("")}</div>
+        <button class="share" id="share">Condividi su WhatsApp</button>`;
+      result.classList.remove("hidden");
+      share(v);
+    });
+  }
+
+  document.querySelectorAll("button.card").forEach(b => b.onclick = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    show(+b.dataset.k);
+  });
+  const toggle = document.getElementById("togglePast");
+  if (toggle) toggle.onclick = () => {
+    const box = document.getElementById("past");
+    box.hidden = !box.hidden;
+    toggle.textContent = (box.hidden ? "Mostra" : "Nascondi") + ` appuntamenti passati (${past.length})`;
+  };
+
+  show(shown);
+}
+
+async function main() {
+  const rep = document.getElementById("reparto");
+  if (REPARTO) rep.textContent = REPARTO; else rep.remove();
+  try {
+    const res = await fetch(SHEET_CSV_URL || CSV_LOCALE, { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    const text = await res.text();
+    try { localStorage.setItem(CACHE_KEY, text); } catch {}
+    render(parseCsv(text));
+  } catch (e) {
+    let cached = null;
+    try { cached = localStorage.getItem(CACHE_KEY); } catch {}
+    if (cached) render(parseCsv(cached), "Offline: mostro l'ultimo calendario scaricato.");
+    else document.getElementById("app").innerHTML =
+      `<p class="err">Impossibile caricare il calendario (${esc(String(e.message || e))}).</p>`;
+  }
+}
+
+main();
+</script>
+</body>
+</html>
