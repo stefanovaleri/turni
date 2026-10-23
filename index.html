@@ -126,8 +126,13 @@ const REPARTO = "";
 // di modificarne forma o colori e chiede uno sfondo neutro: per questo sta su bianco.
 const LOGO = "logo.png";
 
-// Alla prima riunione del foglio la squadriglia i-esima ha il turno i-esimo;
-// a ogni riunione successiva ognuna passa al turno seguente.
+// I turni partono dalla prima riunione a partire da INIZIO_TURNI (AAAA-MM-GG):
+// le riunioni precedenti restano in elenco ma senza turni. A quella riunione
+// PRIMO_TURNO fissa chi fa cosa; le altre squadriglie seguono l'ordine della ruota
+// e a ogni riunione successiva ognuna passa al turno seguente.
+const INIZIO_TURNI = "2026-10-24";
+const PRIMO_TURNO = { squadriglia: "Volpi", turno: "Merenda" };
+
 // Colori dalla palette AGESCI; `testo` è il colore delle scritte sulla ruota.
 const SQUADRIGLIE = [
   { nome: "Volpi", emoji: "🦊", colore: "#E74030", testo: "#fff" },
@@ -187,6 +192,12 @@ function iconSvg(nome, cls = "") {
 
 const CACHE_KEY = "turni-csv";
 const N = TURNI.length;
+// Di quanti turni è avanti PRIMO_TURNO rispetto all'abbinamento di base (squadriglia i → turno i).
+const SCARTO = (() => {
+  const s = SQUADRIGLIE.findIndex(x => x.nome === PRIMO_TURNO.squadriglia);
+  const t = TURNI.findIndex(x => x.nome === PRIMO_TURNO.turno);
+  return s < 0 || t < 0 ? 0 : (t - s + N) % N;
+})();
 
 function parseDate(s) {
   s = s.trim();
@@ -249,10 +260,12 @@ function parseCsv(text) {
     }))
     .filter(v => v.inizio && !isNaN(v.inizio));
   voci.sort((a, b) => a.inizio - b.inizio);
-  let n = 0;
+  const inizioTurni = parseDate(INIZIO_TURNI) || new Date(0);
+  // la numerazione parte da SCARTO, così la prima riunione ha l'abbinamento di PRIMO_TURNO
+  let n = SCARTO;
   voci.forEach(v => {
     if (!v.fine || isNaN(v.fine) || v.fine < v.inizio) v.fine = v.inizio;
-    v.turni = haTurni(v.evento);
+    v.turni = haTurni(v.evento) && v.inizio >= inizioTurni;
     v.n = v.turni ? n++ : -1;
   });
   return voci;
@@ -434,7 +447,7 @@ function render(voci, note) {
       detail.innerHTML = `<div class="card evento ${off ? "off" : ""}">${intestazione}
         <div class="ev-title">${iconSvg(iconaEvento(v), "big")}<span>${esc(titoloEvento(v))}</span></div>
         ${v.note ? `<div class="ev-note">${esc(v.note)}</div>` : ""}
-        <p class="msg">${off ? "Niente riunione, niente turni." : "Niente turni: la rotazione riprende alla prossima riunione."}</p>
+        <p class="msg">${off ? "Niente riunione, niente turni." : "Niente turni per questo appuntamento."}</p>
         <button class="share" id="share">Condividi su WhatsApp</button>
       </div>`;
       share(v);
