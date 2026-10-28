@@ -1,1 +1,41 @@
-
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz: il ruolo del capo squadriglia</title>
+<style>
+:root{--ink:#1b1b2f;--muted:#5b5b7a;--accent:#6c3df0;--c0:#d93f4b;--c1:#2f6fe0;--c2:#f2b01e;--c3:#1f9d62}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100dvh;background:linear-gradient(160deg,#2a1a6b,#1d1245 60%);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);display:flex;justify-content:center;padding:16px}
+main{width:100%;max-width:960px}
+.card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.center{text-align:center}
+h1{font-size:clamp(1.4rem,4vw,2.1rem);margin:0 0 .4em;line-height:1.2}
+.q{font-size:clamp(1.25rem,3.6vw,2.2rem);margin:.2em 0 .8em;line-height:1.25}
+.sub{color:var(--muted);margin:0 0 1em}
+.top{display:flex;justify-content:space-between;color:#fff;margin:0 4px 10px;font-weight:600}
+.bar{height:10px;background:#e7e4f7;border-radius:6px;overflow:hidden;margin-top:4px}
+#fill{height:100%;width:100%;background:var(--accent)}
+.secs{text-align:right;color:var(--muted);font-size:.95rem;margin:4px 0 6px}
+.opts{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:700px){.opts{grid-template-columns:1fr 1fr}}
+.opt{display:flex;align-items:center;gap:12px;min-height:68px;padding:12px 16px;border:0;border-radius:14px;color:#fff;font:inherit;font-size:clamp(1rem,2.4vw,1.45rem);font-weight:600;text-align:left;cursor:pointer}
+.opt:disabled{cursor:default;opacity:1}
+.opt.c0{background:var(--c0)}.opt.c1{background:var(--c1)}.opt.c2{background:var(--c2);color:#2b2200}.opt.c3{background:var(--c3)}
+.opt .badge{flex:none;width:2.1em;height:2.1em;border-radius:50%;background:rgba(255,255,255,.28);display:grid;place-items:center;font-weight:800}
+.opt.c2 .badge{background:rgba(0,0,0,.14)}
+.opt.dim{opacity:.35}
+.opt.right{outline:4px solid #111;outline-offset:2px}
+.opt.right::after{content:"\2713";margin-left:auto;font-size:1.3em}
+.opt.wrong::after{content:"\2715";margin-left:auto;font-size:1.3em}
+.panel{margin-top:16px;padding:14px 16px;border-radius:12px;background:#f3f1fc;border-left:6px solid var(--accent)}
+.panel.ok{border-left-color:var(--c3)}.panel.ko{border-left-color:var(--c0)}
+.panel p{margin:.4em 0 .8em;font-size:1.05rem}
+.primary,.ghost{border:0;border-radius:12px;padding:14px 22px;font:inherit;font-size:1.1rem;font-weight:700;cursor:pointer}
+.primary{background:var(--accent);color:#fff}
+.ghost{background:#ece9fb;color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.seg{display:flex;gap:8px;margin:0 0 14px}
+.seg button{flex:1}
