@@ -32,21 +32,12 @@ h1{font-size:clamp(1.4rem,4vw,2.1rem);margin:0 0 .4em;line-height:1.2}
 .opt.wrong::after{content:"\2715";margin-left:auto;font-size:1.3em}
 .panel{margin-top:16px;padding:14px 16px;border-radius:12px;background:#f3f1fc;border-left:6px solid var(--accent)}
 .panel.ok{border-left-color:var(--c3)}.panel.ko{border-left-color:var(--c0)}
-.panel p{margin:.4em 0 .8em;font-size:1.05rem}
 .primary,.ghost{border:0;border-radius:12px;padding:14px 22px;font:inherit;font-size:1.1rem;font-weight:700;cursor:pointer}
 .primary{background:var(--accent);color:#fff}
 .ghost{background:#ece9fb;color:var(--accent)}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
-.seg{display:flex;gap:8px;margin:0 0 14px}
-.seg button{flex:1}
-.seg .on{background:var(--accent);color:#fff}
 label{display:block;font-weight:600;margin:10px 0 6px}
 input[type=text]{width:100%;padding:12px 14px;font:inherit;font-size:1.05rem;border:2px solid #cfc8f3;border-radius:10px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
-.chip{border:2px solid var(--accent);background:#fff;color:var(--accent);border-radius:999px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
-.chip[aria-pressed=true]{background:var(--accent);color:#fff}
-ol.rank{text-align:left;font-size:1.2rem;max-width:420px;margin:12px auto;padding-left:1.4em}
-ol.rank li{padding:6px 0}
 button:focus-visible,input:focus-visible{outline:3px solid #111;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -56,35 +47,26 @@ button:focus-visible,input:focus-visible{outline:3px solid #111;outline-offset:2
 <script>
 const Q = [
  {q:"Chi prende le decisioni sulla vita e sulle imprese della squadriglia?",
-  o:["Il capo squadriglia da solo","Il capo reparto","Il consiglio di squadriglia, cioè tutti","Chi arriva per primo alla riunione"],a:2,
-  c:"Le decisioni sono del consiglio di squadriglia. Il capo, con il vice, lo rende democratico e fa rispettare ciò che si è deciso."},
+  o:["Il capo squadriglia da solo","Il capo reparto","Il consiglio di squadriglia, cioè tutti","Chi arriva per primo alla riunione"],a:2},
  {q:"Nessuno nasce già capo squadriglia. Cosa fanno i capi per aiutare chi comincia?",
-  o:["Lo sostituiscono subito","Fanno in modo che la squadriglia lo sostenga","Gli tolgono le responsabilità","Aspettano che impari da solo"],a:1,
-  c:"Conta più la collaborazione del risultato di prestigio."},
+  o:["Lo sostituiscono subito","Fanno in modo che la squadriglia lo sostenga","Gli tolgono le responsabilità","Aspettano che impari da solo"],a:1},
  {q:"Il capo squadriglia è responsabile di...",
-  o:["Solo del materiale","Solo delle imprese","Solo del vice","Delle persone, non solo delle cose"],a:3,
-  c:"È la differenza tra organizzare e guidare."},
+  o:["Solo del materiale","Solo delle imprese","Solo del vice","Delle persone, non solo delle cose"],a:3},
  {q:"Cosa deve conoscere il capo squadriglia di ogni squadrigliere?",
-  o:["Il suo sentiero","Il voto in pagella","Il suo indirizzo","La sua squadra del cuore"],a:0,
-  c:"Accompagna ciascuno verso mete e impegni, a partire dai più piccoli."},
+  o:["Il suo sentiero","Il voto in pagella","Il suo indirizzo","La sua squadra del cuore"],a:0},
  {q:"A cosa serve il vice capo squadriglia?",
-  o:["Solo a sostituire il capo","A portare lo zaino del capo","A collaborare, dividere i compiti e prepararsi a fare il capo","A scrivere il verbale"],a:2,
-  c:"Collabora alle decisioni, dà continuità alla squadriglia e partecipa ad alcuni consigli capi."},
+  o:["Solo a sostituire il capo","A portare lo zaino del capo","A collaborare, dividere i compiti e prepararsi a fare il capo","A scrivere il verbale"],a:2},
  {q:"Chi aiuta il capo squadriglia quando è in difficoltà?",
-  o:["Nessuno, deve cavarsela da solo","Il vice, la squadriglia, il consiglio capi e i capi reparto","Solo i genitori","Solo il capo reparto"],a:1,
-  c:"Ci sono anche i campi per capi squadriglia, dove ci si confronta con altri capi."},
+  o:["Nessuno, deve cavarsela da solo","Il vice, la squadriglia, il consiglio capi e i capi reparto","Solo i genitori","Solo il capo reparto"],a:1},
  {q:"Cosa succede quando il capo squadriglia sbaglia?",
-  o:["Perde il ruolo","Si nasconde l'errore","Paga una penitenza","Si verifica insieme dove e perché, e si riprova"],a:3,
-  c:"Si impara facendo, anche sbagliando."},
+  o:["Perde il ruolo","Si nasconde l'errore","Paga una penitenza","Si verifica insieme dove e perché, e si riprova"],a:3},
  {q:"Dove si impara a fare il capo squadriglia?",
-  o:["Sul campo, imparando facendo","Solo leggendo il manuale","Con un esame finale","Non si impara, si nasce capi"],a:0,
-  c:"Il capo si forma sul campo, con il trapasso delle nozioni e l'esempio del capo reparto."},
+  o:["Sul campo, imparando facendo","Solo leggendo il manuale","Con un esame finale","Non si impara, si nasce capi"],a:0},
  {q:"Fare il capo squadriglia è l'ultima tappa del tuo sentiero?",
-  o:["Sì, poi si è arrivati","No, è solo una tappa del mio percorso scout","Sì, ma solo per chi diventa capo reparto","Dipende dall'altezza"],a:1,
-  c:"È una tappa del sentiero, non il traguardo."}
+  o:["Sì, poi si è arrivati","No, è solo una tappa del mio percorso scout","Sì, ma solo per chi diventa capo reparto","Dipende dall'altezza"],a:1}
 ];
 const TIME = 20, L = ['A','B','C','D'];
-let mode = 'solo', name = '', teams = [], hostScores = [], awarded = new Set();
+let name = '';
 let idx = 0, score = 0, right = 0, timer = null;
 const app = document.getElementById('app');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -92,27 +74,12 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 function renderStart(){
   app.innerHTML = `<section class="card">
     <h1>Il ruolo del capo squadriglia</h1>
-    <p class="sub">${Q.length} domande, ${TIME} secondi ciascuna. Dopo ogni risposta si legge il commento.</p>
-    <div class="seg" role="group" aria-label="Modalità">
-      <button class="ghost ${mode==='solo'?'on':''}" id="m-solo">Sul mio telefono</button>
-      <button class="ghost ${mode==='host'?'on':''}" id="m-host">Proiettore</button>
-    </div>
-    ${mode==='solo'
-      ? `<label for="f">Nome della squadriglia o della coppia</label><input type="text" id="f" maxlength="30" value="${esc(name)}" placeholder="Per esempio: Aquile">`
-      : `<label for="f">Squadriglie, separate da virgola</label><input type="text" id="f" maxlength="120" value="${esc(teams.join(', ')||'Aquile, Lupi, Volpi')}">
-         <p class="sub">Un solo schermo per tutti: le squadriglie rispondono a voce o con un cartoncino, e tu segni chi ha risposto bene.</p>`}
+    <p class="sub">${Q.length} domande, ${TIME} secondi ciascuna. Più rispondi in fretta, più punti fai.</p>
+    <label for="f">Nome squadriglia</label><input type="text" id="f" maxlength="30" value="${esc(name)}" placeholder="Per esempio: Volpi">
     <div class="row"><button class="primary" id="go">Inizia</button></div>
   </section>`;
-  document.getElementById('m-solo').onclick = () => { mode='solo'; renderStart(); };
-  document.getElementById('m-host').onclick = () => { mode='host'; renderStart(); };
   document.getElementById('go').onclick = () => {
-    const v = document.getElementById('f').value.trim();
-    if(mode==='solo'){ name = v; }
-    else {
-      teams = v.split(',').map(s=>s.trim()).filter(Boolean).slice(0,8);
-      if(!teams.length){ document.getElementById('f').focus(); return; }
-      hostScores = teams.map(()=>0);
-    }
+    name = document.getElementById('f').value.trim();
     idx = 0; score = 0; right = 0;
     play();
   };
@@ -138,34 +105,25 @@ function renderQuestion(st){
   const opts = q.o.map((t,i) => {
     let cls = 'opt c'+i;
     if(reveal){ cls += i===q.a ? ' right' : (i===st.chosen ? ' wrong' : ' dim'); }
-    const dis = (reveal || mode==='host') ? 'disabled' : '';
+    const dis = reveal ? 'disabled' : '';
     return `<button class="${cls}" data-i="${i}" ${dis}><span class="badge">${L[i]}</span><span>${esc(t)}</span></button>`;
   }).join('');
   let extra = '';
-  if(!reveal && mode==='host') extra = `<div class="row"><button class="primary" id="show">Mostra la risposta</button></div>`;
   if(reveal){
     const ok = st.chosen === q.a;
-    const msg = mode==='host' ? 'La risposta giusta' : (st.chosen===-1 ? 'Tempo scaduto' : ok ? `Giusto! +${st.points} punti` : 'Non è questa');
-    extra = `<div class="panel ${mode==='solo' ? (ok?'ok':'ko') : ''}"><strong>${msg}</strong><p>${esc(q.c)}</p>
-      ${mode==='host' ? `<p class="sub">Tocca le squadriglie che hanno risposto bene:</p>
-        <div class="chips">${teams.map((t,k)=>`<button class="chip" data-t="${k}" aria-pressed="${awarded.has(k)}">${esc(t)}</button>`).join('')}</div>` : ''}
-      <button class="primary" id="next">${last ? 'Vedi il risultato' : 'Avanti'}</button></div>`;
+    const msg = st.chosen===-1 ? 'Tempo scaduto' : ok ? `Giusto! +${st.points} punti` : 'Non è questa';
+    extra = `<div class="panel ${ok?'ok':'ko'}"><strong>${msg}</strong>
+      <div class="row"><button class="primary" id="next">${last ? 'Vedi il risultato' : 'Avanti'}</button></div></div>`;
   }
-  app.innerHTML = `<div class="top"><span>Domanda ${idx+1} di ${Q.length}</span><span>${mode==='solo' ? 'Punti: '+score : 'Proiettore'}</span></div>
+  app.innerHTML = `<div class="top"><span>Domanda ${idx+1} di ${Q.length}</span><span>Punti: ${score}</span></div>
     <section class="card">
       ${reveal ? '' : `<div class="bar" aria-hidden="true"><div id="fill"></div></div><div class="secs"><span id="secs">${TIME}</span> s</div>`}
       <h2 class="q">${esc(q.q)}</h2>
       <div class="opts">${opts}</div>
       ${extra}
     </section>`;
-  if(!reveal && mode==='solo') app.querySelectorAll('.opt').forEach(b => b.onclick = () => answer(+b.dataset.i));
-  const show = document.getElementById('show'); if(show) show.onclick = reveal_;
+  if(!reveal) app.querySelectorAll('.opt').forEach(b => b.onclick = () => answer(+b.dataset.i));
   const next = document.getElementById('next'); if(next){ next.onclick = nextQ; next.focus(); }
-  app.querySelectorAll('.chip').forEach(b => b.onclick = () => {
-    const k = +b.dataset.t;
-    if(awarded.has(k)) awarded.delete(k); else awarded.add(k);
-    b.setAttribute('aria-pressed', awarded.has(k));
-  });
 }
 
 function answer(i){
@@ -177,33 +135,21 @@ function answer(i){
   score += points; if(ok) right++;
   renderQuestion({phase:'reveal', chosen:i, points});
 }
-function timeUp(){ if(mode==='solo') renderQuestion({phase:'reveal', chosen:-1, points:0}); else reveal_(); }
-function reveal_(){ clearInterval(timer); awarded = new Set(); renderQuestion({phase:'reveal', chosen:-1, points:0}); }
+function timeUp(){ renderQuestion({phase:'reveal', chosen:-1, points:0}); }
 function nextQ(){
-  if(mode==='host') awarded.forEach(k => hostScores[k]++);
-  awarded = new Set();
   idx++;
   if(idx >= Q.length) renderEnd(); else play();
 }
 
 function renderEnd(){
-  if(mode==='solo'){
-    app.innerHTML = `<section class="card center"><h1>${name ? esc(name)+': ' : ''}${score} punti</h1>
-      <p>Risposte giuste: ${right} su ${Q.length}.</p>
-      <p class="sub">Il capo squadriglia si impara facendo: ogni errore è un pezzo di strada.</p>
-      <div class="row" style="justify-content:center"><button class="primary" id="again">Rigioca</button></div></section>`;
-  } else {
-    const order = teams.map((t,k)=>({t,p:hostScores[k]})).sort((a,b)=>b.p-a.p);
-    app.innerHTML = `<section class="card center"><h1>Classifica</h1>
-      <ol class="rank">${order.map(r=>`<li><strong>${esc(r.t)}</strong>: ${r.p} su ${Q.length}</li>`).join('')}</ol>
-      <p class="sub">Vincono tutti: nessun capo ha mai fatto la strada da solo.</p>
-      <div class="row" style="justify-content:center"><button class="primary" id="again">Ricomincia</button></div></section>`;
-  }
+  app.innerHTML = `<section class="card center"><h1>${name ? esc(name)+': ' : ''}${score} punti</h1>
+    <p>Risposte giuste: ${right} su ${Q.length}.</p>
+    <p class="sub">Il capo squadriglia si impara facendo: ogni errore è un pezzo di strada.</p>
+    <div class="row" style="justify-content:center"><button class="primary" id="again">Rigioca</button></div></section>`;
   document.getElementById('again').onclick = renderStart;
 }
 
 document.addEventListener('keydown', e => {
-  if(mode!=='solo') return;
   const b = app.querySelectorAll('.opt'); if(!b.length || b[0].disabled) return;
   const k = e.key.toLowerCase(), i = ['a','b','c','d'].indexOf(k) >= 0 ? ['a','b','c','d'].indexOf(k) : ['1','2','3','4'].indexOf(k);
   if(i >= 0) answer(i);
