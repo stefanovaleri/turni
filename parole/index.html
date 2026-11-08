@@ -170,6 +170,95 @@ MESSA PREGHIERA CAPPELLANO CROCE PIOGGIA FANGO VESCICA ZOCCOLO RADIO BARELLA
 BARCA CANOA REMO VELA ISOLA FARO PORTO ANCORA TESORO FORZIERE
 `.trim().split(/\s+/);
 
+// Temi per gli indizi automatici: "TEMA: parole che richiama". Il tema non deve
+// essere una delle PAROLE. Si possono aggiungere temi e parole liberamente.
+const TEMI = `
+NOTTE: LANTERNA TORCIA CANDELA STELLA LUNA VEGLIA GUFO LUCCIOLA SILENZIO BIVACCO FARO SENTINELLA
+ACCENDERE: LANTERNA TORCIA CANDELA FIAMMIFERO FUOCO FARO RADIO FORNELLO
+CALORE: FUOCO FIAMMIFERO CANDELA BRACE LEGNA BIVACCO FORNELLO SOLE MAGLIONE CIOCCOLATA
+ACQUA: FIUME LAGO SORGENTE CASCATA RUSCELLO BORRACCIA DOCCIA PIOGGIA ZATTERA CANOA REMO BARCA DELFINO LONTRA RUGIADA ISOLA PORTO
+MARE: DELFINO GABBIANO BARCA VELA ISOLA FARO PORTO ANCORA PINGUINO TESORO
+PIRATI: TESORO FORZIERE ISOLA ANCORA MAPPA BARCA VELA PORTO CODICE
+NAVIGARE: BARCA CANOA REMO VELA ANCORA PORTO FARO ZATTERA ISOLA BUSSOLA
+CIBO: POLENTA PANE MARMELLATA SALSICCIA CIOCCOLATA MINESTRONE BISCOTTI MERENDA MELA SPIEDINO PANINO CASTAGNA FRAGOLA MORA FUNGO
+DOLCE: MARMELLATA CIOCCOLATA BISCOTTI FRAGOLA MERENDA MELA MORA
+CUOCO: PENTOLA MESTOLO FORNELLO GAVETTA CAMBUSA CUCINA POLENTA MINESTRONE BRACE SPIEDINO
+ALBERO: QUERCIA PINO FAGGIO BETULLA PIGNA CORTECCIA FOGLIA MUSCHIO PICCHIO SCOIATTOLO LEGNA BOSCO CASTAGNA AMACA
+UCCELLO: AQUILA GUFO FALCO GABBIANO CORVO RONDINE AIRONE PICCHIO PINGUINO
+VOLARE: AQUILA FALCO GABBIANO RONDINE AIRONE CORVO LUCCIOLA COCCINELLA
+FELINO: PANTERA TIGRE LINCE LEONE PUMA BAGHEERA
+CORNA: CERVO DAINO CAMOSCIO STAMBECCO ALCE BISONTE
+ALPI: MONTAGNA VETTA RIFUGIO CAMOSCIO STAMBECCO MARMOTTA NEVE SCARPONI MOSCHETTONE CORDA AQUILA
+SERPENTE: COBRA KAA
+KIPLING: AKELA BALOO BAGHEERA KAA MOWGLI GIUNGLA RUPE BRANCO LUPO LUPETTO TIGRE PANTERA
+ULULATO: AKELA LUPO LUPETTO BRANCO RUPE LUNA
+INSETTO: ZANZARA FORMICA LUCCIOLA ZECCA COCCINELLA
+PUNTURA: ZANZARA ZECCA ORTICA SPILLA COBRA
+FERITA: CEROTTO BARELLA VESCICA COLTELLINO ACCETTA SEGA ORTICA
+METEO: PIOGGIA NEVE NEBBIA TEMPORALE FULMINE VENTO SOLE ARCOBALENO RUGIADA
+CIELO: STELLA LUNA SOLE ARCOBALENO ALBA TRAMONTO FULMINE AQUILA RONDINE
+ORIENTAMENTO: BUSSOLA MAPPA CARTINA STELLA SENTIERO TRACCIA SEGNALE FARO BINOCOLO
+COMUNICARE: MORSE SEGNALE RADIO MESSAGGIO CIFRARIO CODICE FISCHIETTO STAFFETTA BANDIERA
+SEGRETO: CIFRARIO CODICE MESSAGGIO TESORO FORZIERE MAPPA SENTINELLA
+ATTREZZI: ACCETTA SEGA MARTELLO BADILE COLTELLINO PALETTO PICCHETTO SPAGO CORDA
+LEGNO: ACCETTA SEGA LEGNA PALETTO PICCHETTO PORTALE TORRETTA SOPRAELEVATA ZATTERA PONTE TAVOLO REMO ZOCCOLO BASTONE CORTECCIA
+COSTRUZIONI: PIONIERE SOPRAELEVATA PONTE ZATTERA PORTALE TORRETTA TAVOLO NODO CORDA PALETTO SPAGO LATRINA
+DORMIRE: TENDA MATERASSINO AMACA SVEGLIA SILENZIO BIVACCO TELO RIFUGIO GROTTA
+MONTAGGIO: TENDA PICCHETTO PALETTO TELO MARTELLO CERATA SPAGO
+BAGAGLIO: ZAINO BORRACCIA GAVETTA MATERASSINO TORCIA BUSSOLA CERATA COLTELLINO
+VESTITI: CAMICIA CINTURA CAPPELLONE CALZETTONI MAGLIONE FAZZOLETTONE SCARPONI CERATA
+DIVISA: CAMICIA CINTURA CAPPELLONE CALZETTONI FAZZOLETTONE DISTINTIVO SPILLA GIGLIO
+PIEDI: SCARPONI CALZETTONI VESCICA ZOCCOLO HIKE SENTIERO FANGO
+CAMMINARE: HIKE SENTIERO ROUTE USCITA TAPPA SCARPONI ZAINO VETTA BASTONE
+SIMBOLI: GIGLIO TRIFOGLIO GUIDONCINO TOTEM BANDIERA DISTINTIVO CROCE SPILLA MOTTO
+SCOUT: PROMESSA LEGGE MOTTO GIGLIO ESPLORATORE GUIDA JAMBOREE FAZZOLETTONE CAMPO
+VALORI: ONORE LEALTÀ AMICIZIA SERVIZIO PROMESSA LEGGE
+BRANCHE: LUPETTO COCCINELLA ESPLORATORE GUIDA ROVER SCOLTA NOVIZIO CLAN BRANCO REPARTO
+GRUPPO: SQUADRIGLIA REPARTO BRANCO CLAN CERCHIO CONSIGLIO QUADRATO ADUNATA
+RIUNIONE: CONSIGLIO CERCHIO QUADRATO ADUNATA ISPEZIONE ALZABANDIERA VEGLIA
+CERIMONIA: ALZABANDIERA BANDIERA PROMESSA QUADRATO MESSA CROCE
+CHIESA: MESSA PREGHIERA CAPPELLANO CROCE CANDELA
+MUSICA: CANZONE CHITARRA BANS VEGLIA FISCHIETTO RADIO
+FESTA: BANS CANZONE CHITARRA GIOCO VEGLIA FUOCO MERENDA
+GARA: SFIDA GIOCO CACCIA IMPRESA MISSIONE BREVETTO SPECIALITÀ STAFFETTA
+ESPLORAZIONE: AVVENTURA MISSIONE IMPRESA MAPPA GROTTA ISOLA TESORO HIKE BUSSOLA
+INSEGUIMENTO: CACCIA TRACCIA SEGNALE STAFFETTA LUPO VOLPE FALCO
+OSSERVARE: BINOCOLO SENTINELLA TORRETTA FARO GUFO AQUILA AIRONE
+COMANDO: CAPO VICE FISCHIETTO ADUNATA ISPEZIONE CONSIGLIO
+PULIZIA: DOCCIA LATRINA ISPEZIONE BADILE TURNO SERVIZIO
+SPORCO: FANGO LATRINA PIOGGIA BADILE
+SEDE: ANGOLO GUIDONCINO TOTEM CONSIGLIO TAVOLO SQUADRIGLIA
+NATURA: BOSCO PRATO MUSCHIO FUNGO FOGLIA SORGENTE RUSCELLO SASSO
+PIETRA: SASSO GROTTA RUPE VETTA CASCATA
+VERDE: PRATO MUSCHIO FOGLIA ORTICA PINO TRIFOGLIO
+ROSSO: FRAGOLA FUOCO VOLPE BRACE TRAMONTO MELA CROCE
+NERO: CORVO PANTERA BAGHEERA COBRA
+PELLICCIA: VOLPE ORSO CASTORO SCOIATTOLO LINCE MARMOTTA TASSO LONTRA BALOO
+TANA: CINGHIALE VOLPE TASSO MARMOTTA GROTTA ORSO CASTORO LUPO
+ACULEI: RICCIO PIGNA ORTICA CASTAGNA
+LETARGO: ORSO MARMOTTA RICCIO TASSO
+MATTINA: ALBA SVEGLIA RUGIADA ALZABANDIERA MERENDA
+SERA: TRAMONTO VEGLIA FUOCO CANDELA SILENZIO LUNA
+INVERNO: NEVE MAGLIONE CASTAGNA CIOCCOLATA PINGUINO MARMOTTA
+ESTATE: CAMPO SOLE ZANZARA FRAGOLA LAGO CANOA
+AUTUNNO: CASTAGNA FUNGO FOGLIA PIGNA NEBBIA
+RUMORE: FISCHIETTO TEMPORALE FULMINE SVEGLIA BANS RADIO MARTELLO
+VELOCE: FALCO RONDINE LINCE STAFFETTA FULMINE PUMA
+PERICOLO: COBRA TEMPORALE FULMINE ZECCA ORTICA ACCETTA RUPE CASCATA BARELLA
+RIPARO: TENDA TELO CERATA RIFUGIO GROTTA
+TRAGUARDO: BREVETTO SPECIALITÀ TAPPA VETTA IMPRESA DISTINTIVO
+FIUMI: FIUME PONTE RUSCELLO CASTORO AIRONE LONTRA CANOA
+ROVERI: ROVER ROUTE CLAN NOVIZIO SCOLTA
+ABITI: CAMICIA MAGLIONE
+LEGARE: NODO CORDA SPAGO MOSCHETTONE CINTURA AMACA
+PICNIC: PANE PANINO SALSICCIA MERENDA MELA TAVOLO PRATO
+SELVATICO: CERVO DAINO CINGHIALE LUPO ORSO VOLPE LINCE
+CUORE: AMICIZIA LEALTÀ ONORE PROMESSA PREGHIERA
+LAVORO: FORMICA CASTORO SERVIZIO TURNO BADILE CAMBUSA
+ARIA: VENTO NEBBIA AQUILA BANDIERA FISCHIETTO
+GRANDE: ALCE BISONTE ORSO MONTAGNA
+`.trim().split("\n").map(r => { const [k, v] = r.split(":"); return [k.trim(), v.trim().split(/\s+/)]; });
+
 // ------------------------------ Utilità -------------------------------------
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -204,9 +293,32 @@ function nuovoCodice() {
 
 // ------------------------------ Stato ---------------------------------------
 let codice = null, tab = null, stato = null, ruolo = "giocatore", scelta = -1;
-let client = null, rete = "spenta", aperto = { invito: false };
+let client = null, rete = "spenta", aperto = { invito: false }, suggeriti = 0;
 
-function statoIniziale() { return { v: 0, scoperte: [], turno: tab.inizia, indizio: null, perde: null, prossima: null }; }
+function statoIniziale() { return { v: 0, scoperte: [], turno: tab.inizia, indizio: null, perde: null, prossima: null, auto: true }; }
+
+// Indizi possibili per la squadra t, dal migliore. Dipendono solo dal codice e
+// dalle carte scoperte, quindi tutti i telefoni trovano lo stesso indizio.
+function indizi(t) {
+  const coperte = tab.parole.map((p, i) => ({ p, i, c: tab.colori[i] })).filter(x => !stato.scoperte.includes(x.i));
+  const rnd = mulberry(seme(codice + t + stato.scoperte.slice().sort((a, b) => a - b).join(","))());
+  const out = [];
+  for (const [tema, parole] of TEMI) {
+    const dentro = coperte.filter(x => parole.includes(x.p));
+    const mie = dentro.filter(x => x.c === t).length;
+    const caso = rnd();
+    if (!mie || dentro.some(x => x.c === "x")) continue;   // mai vicino alla trappola
+    const loro = dentro.filter(x => x.c === altra(t)).length, neutre = dentro.filter(x => x.c === "n").length;
+    out.push({ p: tema, n: mie, sicuro: !loro, punti: mie - 1.5 * loro - 0.6 * neutre + caso * 0.4 });
+  }
+  return out.sort((a, b) => (b.sicuro - a.sicuro) || (b.punti - a.punti));
+}
+function indizioAuto() {
+  const x = indizi(stato.turno)[0];
+  return x ? { p: x.p, n: String(x.n), t: stato.turno, auto: true } : null;
+}
+// L'indizio da mostrare: quello fissato, o in modalità automatica quello calcolato adesso
+function indizioOra() { return stato.indizio || (stato.auto && !esito() ? indizioAuto() : null); }
 
 function esito() {
   if (stato.perde) return { vince: altra(stato.perde), trappola: true };
@@ -216,6 +328,8 @@ function esito() {
 function restano(t) { return tab.colori.filter((c, i) => c === t && !stato.scoperte.includes(i)).length; }
 
 function cambia(f) {
+  // L'indizio automatico si fissa alla prima mossa del turno, così non cambia mentre si scopre
+  if (!stato.indizio && stato.auto && !esito()) stato.indizio = indizioAuto();
   f(stato);
   stato.v++;
   salva();
@@ -242,7 +356,8 @@ function unisci(m) {
   const mie = stato.scoperte.filter(i => !loro.includes(i));
   if (m.v > stato.v) {
     stato.turno = m.turno === "b" ? "b" : "g";
-    stato.indizio = m.indizio && typeof m.indizio.p === "string" ? { p: m.indizio.p.slice(0, 24), n: String(m.indizio.n).slice(0, 2), t: m.indizio.t } : null;
+    stato.indizio = m.indizio && typeof m.indizio.p === "string" ? { p: m.indizio.p.slice(0, 24), n: String(m.indizio.n).slice(0, 2), t: m.indizio.t, auto: !!m.indizio.auto } : null;
+    stato.auto = m.auto !== false;
     stato.prossima = typeof m.prossima === "string" ? m.prossima : null;
     stato.v = m.v;
   }
@@ -313,8 +428,8 @@ function testata(sotto) {
 function renderHome() {
   $("#app").innerHTML = `${testata("Gioco di parole a squadre")}
     <div class="card">
-      <p>Due squadre, <b>Gialla</b> e <b>Blu</b>, e 25 parole scout. Ogni squadra ha un capo che conosce la chiave
-      e la guida con un indizio di una sola parola. Attenti alla <b>trappola</b>!</p>
+      <p>Due squadre, <b>Gialla</b> e <b>Blu</b>, e 25 parole scout. A ogni turno arriva un indizio di una sola
+      parola: dal computer, oppure da un capo squadra che conosce la chiave. Attenti alla <b>trappola</b>!</p>
       <button class="btn pieno" data-act="crea">Crea una partita</button>
     </div>
     <h2>Oppure entra in una partita</h2>
@@ -328,11 +443,12 @@ function renderHome() {
 
 function regole(aperte) {
   return `<details class="card"${aperte ? "" : ""}><summary>Come si gioca</summary><ul>
-    <li>Dividetevi in due squadre, <b>Gialla</b> e <b>Blu</b>. Ogni squadra sceglie un <b>capo</b>: solo i capi
-      vedono sul telefono di che colore è ogni parola.</li>
-    <li>Tutti aprono la stessa partita (stesso codice). I capi toccano <b>Capo 🟡</b> o <b>Capo 🔵</b>.</li>
-    <li>Al suo turno il capo dà un <b>indizio</b>: una parola sola e un numero, per esempio <i>“Notte, 2”</i> per
-      LANTERNA e STELLA. Niente gesti, niente parole che stanno sul tabellone.</li>
+    <li>Dividetevi in due squadre, <b>Gialla</b> e <b>Blu</b>, e aprite tutti la stessa partita (stesso codice).</li>
+    <li>A ogni turno c'è un <b>indizio</b>: una parola sola e un numero, per esempio <i>“Notte, 2”</i> per
+      LANTERNA e STELLA: il numero dice quante parole della squadra c'entrano.</li>
+    <li><b>🤖 Indizi automatici</b>: l'indizio lo dà il computer, e tutti giocano. <b>🧑 Dal capo</b>: ogni squadra
+      sceglie un capo, che tocca <b>Capo 🟡</b> o <b>Capo 🔵</b>, vede di che colore è ogni parola e dà l'indizio
+      lui (niente gesti, niente parole che stanno sul tabellone).</li>
     <li>La squadra discute e tocca le parole (due tocchi per scoprirle), una alla volta. Può provare fino al
       numero detto più una.</li>
     <li>Parola della propria squadra: si continua. Parola dell'altra squadra o <b>neutra</b> (beige): il turno passa.
@@ -351,7 +467,8 @@ function adattaParole() {
 
 function renderPartita() {
   const fine = esito();
-  const capo = ruolo !== "giocatore";
+  const capo = ruolo !== "giocatore" && !stato.auto;
+  const ind = indizioOra();
   const mioTeam = capo ? ruolo.slice(-1) : null;
   const tocca = stato.turno;
 
@@ -362,7 +479,8 @@ function renderPartita() {
   } else {
     barra = `<div class="turno ${tocca}"><span>Tocca alla squadra ${NOMI[tocca]}</span>
       <span class="conta"><span class="pallino g" title="Parole gialle da trovare">${restano("g")}</span><span class="pallino b" title="Parole blu da trovare">${restano("b")}</span></span></div>`;
-    if (stato.indizio) barra += `<div class="indizio"><span class="muted small">Indizio</span><br><span class="parola">${esc(stato.indizio.p)}</span><span class="num">${esc(stato.indizio.n)}</span></div>`;
+    if (ind) barra += `<div class="indizio"><span class="muted small">${ind.auto ? "🤖 Indizio del computer" : "Indizio del capo"}</span><br><span class="parola">${esc(ind.p)}</span><span class="num">${esc(ind.n)}</span></div>`;
+    else if (stato.auto) barra += `<div class="indizio"><span class="muted small">🤖 Nessun indizio sicuro: passate o tirate a indovinare!</span></div>`;
   }
 
   const vediChiave = capo || !!fine;
@@ -383,15 +501,21 @@ function renderPartita() {
       comandi += `<div class="card"><b>Dai l'indizio alla tua squadra</b>
         <div class="riga" style="margin-top:8px"><input type="text" id="ind" maxlength="24" placeholder="Una parola" autocomplete="off" style="flex:3">
         <select id="num" aria-label="Numero" style="flex:1">${[1,2,3,4,5,6,7,8,9,0].map(n => `<option>${n}</option>`).join("")}<option value="∞">∞</option></select></div>
-        <button class="btn pieno" data-act="indizio">Mostra l'indizio a tutti</button>
+        <div class="riga"><button class="btn" data-act="suggerisci">💡 Suggerisci</button>
+        <button class="btn pieno" data-act="indizio">Mostra a tutti</button></div>
         <p class="small muted" style="margin:8px 0 0">Puoi anche dirlo a voce: questo campo è facoltativo.</p></div>`;
     }
     comandi += `<button class="btn" data-act="passa">Passa il turno alla squadra ${NOMI[altra(tocca)]}</button>`;
   }
 
-  const r = (k, t) => `<button class="${ruolo === k ? "on" : ""}" data-ruolo="${k}">${t}</button>`;
-  comandi += `<h2>Chi sei?</h2><div class="ruoli">${r("giocatore", "Giocatore")}${r("capo-g", "Capo 🟡")}${r("capo-b", "Capo 🔵")}</div>
-    ${capo ? `<div class="avviso">Vedi la chiave: non far guardare lo schermo alla tua squadra!</div>` : ""}`;
+  comandi += `<h2>Indizi</h2><div class="ruoli">
+      <button class="${stato.auto ? "on" : ""}" data-modo="auto">🤖 Automatici</button>
+      <button class="${stato.auto ? "" : "on"}" data-modo="capo">🧑 Dal capo</button></div>`;
+  if (!stato.auto) {
+    const r = (k, t) => `<button class="${ruolo === k ? "on" : ""}" data-ruolo="${k}">${t}</button>`;
+    comandi += `<h2>Chi sei?</h2><div class="ruoli">${r("giocatore", "Giocatore")}${r("capo-g", "Capo 🟡")}${r("capo-b", "Capo 🔵")}</div>
+      ${capo ? `<div class="avviso">Vedi la chiave: non far guardare lo schermo alla tua squadra!</div>` : ""}`;
+  }
 
   const url = location.origin + location.pathname + "?p=" + codice;
   const msg = `Giochiamo a "Pista segreta"! Entra qui: ${url}`;
@@ -442,7 +566,20 @@ document.addEventListener("click", e => {
     ruolo = k; scrivi("parole-ruolo", { codice, ruolo }, sessionStorage); render();
     return;
   }
+  if (t.dataset.modo) {
+    const auto = t.dataset.modo === "auto";
+    if (auto !== stato.auto) cambia(s => { s.auto = auto; if (s.indizio && s.indizio.auto !== auto) s.indizio = null; });
+    return;
+  }
   const act = t.dataset.act;
+  if (act === "suggerisci") {
+    const lista = indizi(stato.turno);
+    if (!lista.length) { alert("Non trovo un indizio sicuro: inventane uno tu!"); return; }
+    const x = lista[suggeriti++ % Math.min(lista.length, 5)];
+    $("#ind").value = x.p.charAt(0) + x.p.slice(1).toLowerCase();
+    $("#num").value = String(x.n);
+    return;
+  }
   if (act === "crea") vai(nuovoCodice());
   else if (act === "entra") {
     const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
