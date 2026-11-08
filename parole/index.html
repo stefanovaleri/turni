@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1E3A2F">
+<title>Pista segreta</title>
+<link rel="icon" href="../logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Roboto+Slab:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* Due squadre, gialla e blu, su un tabellone di 25 parole scout */
+  :root {
+    --sfondo: #F3EEE3; --ink: #1F2A24; --tenue: #5F6B63; --carta: #FFFDF7; --bordo: #D8CFBC;
+    --giallo: #FDC500; --giallo-ink: #2A2100; --giallo-tinta: #FFF1A6;
+    --blu: #1F5FBF; --blu-ink: #FFFFFF; --blu-tinta: #D3E2FA;
+    --neutra: #CBB98F; --neutra-ink: #2B2416; --neutra-tinta: #EFE7D6;
+    --trappola: #1A1A1A; --trappola-ink: #FFFFFF; --rosso: #D62F2F;
+    --verde: #2E6B4F; --testata: #1E3A2F; --testata-ink: #F3EEE3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --sfondo: #121A16; --ink: #E9E4D8; --tenue: #A3ADA6; --carta: #24302A; --bordo: #3A4842;
+      --giallo-tinta: #4D4100; --blu-tinta: #1B3460; --neutra-tinta: #3A3427;
+      --trappola: #000000; --testata: #0B120E; --verde: #4FA37C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --sfondo: #121A16; --ink: #E9E4D8; --tenue: #A3ADA6; --carta: #24302A; --bordo: #3A4842;
+    --giallo-tinta: #4D4100; --blu-tinta: #1B3460; --neutra-tinta: #3A3427;
+    --trappola: #000000; --testata: #0B120E; --verde: #4FA37C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { min-height: 100vh; background: var(--sfondo); color: var(--ink); font: 16px/1.45 Roboto, Tahoma, system-ui, sans-serif; }
+  main { max-width: 520px; margin: 0 auto; padding: 0 16px 48px; }
+  h1, h2, .slab { font-family: "Roboto Slab", Tahoma, serif; }
+  p { margin: 0 0 10px; }
+  button { font: inherit; cursor: pointer; color: inherit; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--giallo); outline-offset: 2px; }
+
+  header { background: var(--testata); color: var(--testata-ink); margin: 0 -16px 14px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+  header h1 { margin: 0; font-size: 1.3rem; line-height: 1.1; }
+  header .sotto { font-size: .82rem; opacity: .8; }
+  header .cod { margin-left: auto; font-family: "Roboto Condensed", sans-serif; letter-spacing: .18em; background: var(--testata-ink); color: var(--testata); border-radius: 8px; padding: 3px 6px 3px 10px; font-size: 1.05rem; }
+  .logo { font-size: 1.8rem; line-height: 1; }
+
+  .btn { display: block; width: 100%; text-align: center; text-decoration: none; padding: 12px 16px; margin-top: 10px; border-radius: 12px;
+    border: 2px solid var(--ink); background: var(--carta); color: var(--ink); font-weight: 700; font-size: 1.02rem; }
+  .btn.pieno { background: var(--verde); border-color: var(--verde); color: #fff; }
+  .btn:active { transform: translateY(1px); }
+  .riga { display: flex; gap: 10px; }
+  .riga > * { flex: 1; }
+  .link { background: none; border: 0; padding: 6px 4px; text-decoration: underline; color: var(--tenue); font-size: .92rem; }
+  .card { background: var(--carta); border: 1px solid var(--bordo); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+  .muted { color: var(--tenue); }
+  .small { font-size: .88rem; }
+  label { display: block; font-weight: 700; margin: 12px 0 6px; }
+  input[type=text], select { width: 100%; padding: 11px 12px; font: inherit; font-size: 1.05rem; color: var(--ink); background: var(--sfondo);
+    border: 2px solid var(--bordo); border-radius: 10px; }
+  input.codice { text-transform: uppercase; letter-spacing: .3em; font-weight: 700; text-align: center; font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; margin: 22px 0 8px; }
+
+  /* Barra del turno */
+  .turno { border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .turno.g { background: var(--giallo); color: var(--giallo-ink); }
+  .turno.b { background: var(--blu); color: var(--blu-ink); }
+  .turno .conta { margin-left: auto; display: flex; gap: 6px; font-family: "Roboto Condensed", sans-serif; }
+  .pallino { display: inline-grid; place-items: center; min-width: 30px; height: 30px; border-radius: 999px; padding: 0 6px; border: 2px solid currentColor; font-size: 1rem; }
+  .pallino.g { background: var(--giallo); color: var(--giallo-ink); border-color: var(--giallo-ink); }
+  .pallino.b { background: var(--blu); color: var(--blu-ink); border-color: var(--blu-ink); }
+  .indizio { text-align: center; background: var(--carta); border: 2px dashed var(--bordo); border-radius: 14px; padding: 8px 12px; margin-bottom: 10px; }
+  .indizio .parola { font-family: "Roboto Slab", serif; font-weight: 700; font-size: 1.6rem; text-transform: uppercase; letter-spacing: .04em; }
+  .indizio .num { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; margin-left: 8px; border-radius: 50%; background: var(--ink); color: var(--sfondo); font-size: 1.1rem; vertical-align: .2em; }
+  .fine { text-align: center; padding: 14px; border-radius: 14px; margin-bottom: 10px; font-family: "Roboto Slab", serif; font-weight: 700; font-size: 1.35rem; animation: salta .45s ease-out both; }
+  .fine.g { background: var(--giallo); color: var(--giallo-ink); }
+  .fine.b { background: var(--blu); color: var(--blu-ink); }
+  .fine small { display: block; font-family: Roboto, sans-serif; font-weight: 500; font-size: .9rem; }
+
+  /* Tabellone */
+  .tab { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px; }
+  .c { position: relative; height: 56px; padding: 0 3px; border-radius: 9px; border: 2px solid var(--bordo); background: var(--carta);
+    display: grid; place-items: center; overflow: hidden; transition: background .25s, transform .12s; touch-action: manipulation; }
+  .c .w { display: block; white-space: nowrap; font-family: "Roboto Condensed", "Arial Narrow", sans-serif; font-weight: 700; text-transform: uppercase; font-size: 13px; line-height: 1; }
+  .c:disabled { cursor: default; }
+  .c.sel { transform: scale(1.07); border-color: var(--ink); box-shadow: 0 0 0 3px var(--giallo); z-index: 1; }
+  .c.sel::after { content: "scopri?"; position: absolute; bottom: 3px; left: 0; right: 0; font-size: 9px; font-weight: 700; text-align: center; letter-spacing: .05em; }
+  /* Vista del capo squadra: la chiave in tinta */
+  .chiave .c.k-g { background: var(--giallo-tinta); border-color: var(--giallo); }
+  .chiave .c.k-b { background: var(--blu-tinta); border-color: var(--blu); }
+  .chiave .c.k-n { background: var(--neutra-tinta); border-color: var(--neutra); }
+  .chiave .c.k-x { background: var(--trappola); border-color: var(--rosso); color: var(--trappola-ink); }
+  /* Carte scoperte */
+  .c.su { animation: gira .35s ease-out; }
+  .c.su.k-g { background: var(--giallo); border-color: var(--giallo); color: var(--giallo-ink); }
+  .c.su.k-b { background: var(--blu); border-color: var(--blu); color: var(--blu-ink); }
+  .c.su.k-n { background: var(--neutra); border-color: var(--neutra); color: var(--neutra-ink); }
+  .c.su.k-x { background: var(--trappola); border-color: var(--rosso); color: var(--trappola-ink); }
+  .c.su .w { opacity: .55; }
+  .c.su::before { position: absolute; top: 1px; right: 3px; font-size: 11px; }
+  .c.su.k-g::before, .c.su.k-b::before { content: "⚜"; }
+  .c.su.k-x::before { content: "☠"; }
+  .chiave .c.su { filter: saturate(.35); opacity: .6; }
+
+  .stato-rete { font-size: .82rem; color: var(--tenue); text-align: center; margin: 6px 0 2px; }
+  .ruoli + *, .avviso + * { margin-top: 12px; }
+  .ruoli { display: flex; border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; }
+  .ruoli button { flex: 1; border: 0; background: var(--carta); padding: 10px 4px; font-weight: 700; font-size: .92rem; }
+  .ruoli button + button { border-left: 2px solid var(--ink); }
+  .ruoli button.on { background: var(--ink); color: var(--sfondo); }
+  .avviso { background: var(--neutra-tinta); border-radius: 10px; padding: 8px 12px; margin-top: 8px; font-size: .9rem; }
+  .qr { width: 170px; height: 170px; margin: 10px auto; background: #fff; border-radius: 10px; padding: 8px; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  details summary { cursor: pointer; font-weight: 700; }
+  details ul { padding-left: 20px; margin: 8px 0 0; }
+  details li { margin-bottom: 6px; }
+
+  @keyframes gira { from { transform: rotateY(90deg); } to { transform: none; } }
+  @keyframes salta { from { transform: scale(.8); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<main id="app"><noscript>Per giocare serve JavaScript.</noscript></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.10.1/mqtt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Il tabellone (parole e colori) si ricava dal codice della partita: tutti i
+// telefoni con lo stesso codice vedono la stessa griglia, senza server. Le
+// carte scoperte, il turno e l'indizio passano da un broker MQTT pubblico
+// (come in bugia/), in un messaggio conservato: <RADICE><codice>/stato.
+// Le carte scoperte si uniscono (non si perdono mai); il resto vince la
+// versione più alta. Senza rete si gioca lo stesso su un solo telefono.
+//
+// ⚠️ Non riordinare né cambiare PAROLE: le partite già iniziate cambierebbero
+// tabellone. Le parole nuove vanno aggiunte in fondo.
+// ---------------------------------------------------------------------------
+const BROKER = "wss://broker.emqx.io:8084/mqtt";
+const RADICE = "agesci-turni/parole/v1/";
+const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const NOMI = { g: "Gialla", b: "Blu" };
+
+const PAROLE = `
+TENDA ZAINO BUSSOLA NODO CORDA ACCETTA COLTELLINO GAVETTA BORRACCIA PICCHETTO
+PALETTO TELO CERATA SCARPONI TORCIA LANTERNA CANDELA FIAMMIFERO FISCHIETTO BINOCOLO
+MAPPA CARTINA MATERASSINO SPAGO MARTELLO PENTOLA MESTOLO FORNELLO LEGNA CEROTTO
+AMACA BADILE SEGA MOSCHETTONE BASTONE FAZZOLETTONE CAMICIA CINTURA CAPPELLONE DISTINTIVO
+CALZETTONI MAGLIONE SPILLA PROMESSA LEGGE MOTTO GIGLIO TRIFOGLIO REPARTO SQUADRIGLIA
+CAMPO USCITA HIKE IMPRESA MISSIONE SPECIALITÀ BREVETTO SENTIERO CONSIGLIO ALZABANDIERA
+BANDIERA GUIDONCINO ANGOLO TOTEM CERCHIO VEGLIA BANS CANZONE CHITARRA FUOCO
+BIVACCO JAMBOREE ROUTE CAMBUSA TURNO SERVIZIO ONORE LEALTÀ AVVENTURA AMICIZIA
+SFIDA GIOCO CACCIA TRACCIA SEGNALE MORSE PIONIERE SOPRAELEVATA PONTE ZATTERA
+PORTALE TORRETTA CUCINA TAVOLO LATRINA DOCCIA ISPEZIONE SVEGLIA SILENZIO ADUNATA
+QUADRATO CAPO VICE ESPLORATORE GUIDA LUPETTO COCCINELLA ROVER SCOLTA BRANCO
+CLAN NOVIZIO TAPPA SENTINELLA STAFFETTA MESSAGGIO CIFRARIO CODICE AKELA BALOO
+BAGHEERA KAA MOWGLI GIUNGLA RUPE AQUILA LUPO VOLPE CASTORO SCOIATTOLO
+GUFO CERVO ORSO FALCO DAINO PANTERA TIGRE CAMOSCIO STAMBECCO GABBIANO
+DELFINO CINGHIALE LINCE LEONE PUMA CORVO COBRA RONDINE AIRONE LONTRA
+TASSO RICCIO PICCHIO MARMOTTA ALCE BISONTE PINGUINO BOSCO FIUME LAGO
+MONTAGNA VETTA RIFUGIO GROTTA SORGENTE PRATO QUERCIA PINO FAGGIO BETULLA
+MUSCHIO FUNGO PIGNA CORTECCIA FOGLIA RUGIADA NEBBIA TEMPORALE FULMINE ALBA
+TRAMONTO ARCOBALENO VENTO NEVE STELLA LUNA SOLE CASCATA RUSCELLO SASSO
+ZANZARA FORMICA LUCCIOLA ZECCA ORTICA MORA FRAGOLA CASTAGNA POLENTA PANE
+MARMELLATA SALSICCIA CIOCCOLATA MINESTRONE BISCOTTI MERENDA MELA BRACE SPIEDINO PANINO
+MESSA PREGHIERA CAPPELLANO CROCE PIOGGIA FANGO VESCICA ZOCCOLO RADIO BARELLA
+BARCA CANOA REMO VELA ISOLA FARO PORTO ANCORA TESORO FORZIERE
+`.trim().split(/\s+/);
+
+// ------------------------------ Utilità -------------------------------------
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function leggi(k, store = localStorage) { try { return JSON.parse(store.getItem(k)); } catch { return null; } }
+function scrivi(k, v, store = localStorage) { try { v == null ? store.removeItem(k) : store.setItem(k, JSON.stringify(v)); } catch {} }
+const altra = t => (t === "g" ? "b" : "g");
+
+// Numeri casuali ripetibili a partire dal codice
+function seme(s) {
+  let h = 1779033703 ^ s.length;
+  for (let i = 0; i < s.length; i++) { h = Math.imul(h ^ s.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+  return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0); };
+}
+function mulberry(a) {
+  return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function mescola(arr, rnd) {
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr;
+}
+function tabellone(cod) {
+  const rnd = mulberry(seme("pista:" + cod)());
+  const parole = mescola(PAROLE.slice(), rnd).slice(0, 25);
+  const inizia = rnd() < 0.5 ? "g" : "b";
+  const colori = mescola([...Array(9).fill(inizia), ...Array(8).fill(altra(inizia)), ...Array(7).fill("n"), "x"], rnd);
+  return { parole, colori, inizia };
+}
+function nuovoCodice() {
+  const a = new Uint32Array(4); crypto.getRandomValues(a);
+  return Array.from(a, n => ALFABETO[n % ALFABETO.length]).join("");
+}
+
+// ------------------------------ Stato ---------------------------------------
+let codice = null, tab = null, stato = null, ruolo = "giocatore", scelta = -1;
+let client = null, rete = "spenta", aperto = { invito: false };
+
+function statoIniziale() { return { v: 0, scoperte: [], turno: tab.inizia, indizio: null, perde: null, prossima: null }; }
+
+function esito() {
+  if (stato.perde) return { vince: altra(stato.perde), trappola: true };
+  for (const t of ["g", "b"]) if (restano(t) === 0) return { vince: t };
+  return null;
+}
+function restano(t) { return tab.colori.filter((c, i) => c === t && !stato.scoperte.includes(i)).length; }
+
+function cambia(f) {
+  f(stato);
+  stato.v++;
+  salva();
+  pubblica();
+  render();
+}
+function salva() { scrivi("parole-" + codice, stato); }
+
+function scopri(i) {
+  if (esito() || stato.scoperte.includes(i)) return;
+  cambia(s => {
+    s.scoperte.push(i);
+    const c = tab.colori[i];
+    if (c === "x") s.perde = s.turno;
+    else if (c !== s.turno) { s.turno = altra(s.turno); s.indizio = null; }
+  });
+  if (navigator.vibrate) navigator.vibrate(tab.colori[i] === "x" ? [80, 60, 200] : 30);
+}
+
+// Unisce lo stato ricevuto con il mio; true se io avevo qualcosa in più
+function unisci(m) {
+  if (!m || typeof m !== "object" || !Array.isArray(m.scoperte)) return false;
+  const loro = m.scoperte.filter(i => Number.isInteger(i) && i >= 0 && i < 25);
+  const mie = stato.scoperte.filter(i => !loro.includes(i));
+  if (m.v > stato.v) {
+    stato.turno = m.turno === "b" ? "b" : "g";
+    stato.indizio = m.indizio && typeof m.indizio.p === "string" ? { p: m.indizio.p.slice(0, 24), n: String(m.indizio.n).slice(0, 2), t: m.indizio.t } : null;
+    stato.prossima = typeof m.prossima === "string" ? m.prossima : null;
+    stato.v = m.v;
+  }
+  stato.perde = stato.perde || (m.perde === "g" || m.perde === "b" ? m.perde : null);
+  stato.scoperte = [...loro, ...mie];
+  salva();
+  return mie.length > 0 || (stato.perde && !m.perde);
+}
+
+// ------------------------------ Rete ----------------------------------------
+const TOPIC = () => RADICE + codice + "/stato";
+function pubblica() {
+  if (client && client.connected) client.publish(TOPIC(), JSON.stringify(stato), { qos: 1, retain: true });
+}
+function collega() {
+  if (typeof mqtt === "undefined") { rete = "spenta"; return; }
+  rete = "attesa";
+  client = mqtt.connect(BROKER, { keepalive: 20, reconnectPeriod: 2000, connectTimeout: 10000, clean: true,
+    clientId: "parole_" + Math.random().toString(36).slice(2, 12) });
+  client.on("connect", () => {
+    rete = "ok";
+    client.subscribe(TOPIC(), { qos: 1 });
+    // Se nessuno ha ancora pubblicato, il primo stato è il mio
+    setTimeout(() => { if (stato.v > 0 || stato.scoperte.length) pubblica(); }, 1500);
+    render();
+  });
+  const persa = () => { if (rete !== "persa") { rete = "persa"; render(); } };
+  client.on("offline", persa);
+  client.on("close", persa);
+  client.on("message", (topic, payload) => {
+    if (topic !== TOPIC()) return;
+    let m; try { m = JSON.parse(payload.toString()); } catch { return; }
+    const v = stato.v, n = stato.scoperte.length;
+    if (unisci(m)) { stato.v = Math.max(stato.v, m.v) + 1; salva(); pubblica(); }
+    if (stato.prossima && stato.prossima !== codice) return vai(stato.prossima);
+    if (stato.v !== v || stato.scoperte.length !== n) { scelta = -1; render(); }
+  });
+}
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && client && !client.connected && !client.disconnecting) client.reconnect();
+});
+
+function vai(cod) {
+  location.href = location.pathname + "?p=" + encodeURIComponent(cod);
+}
+
+// ------------------------------ Avvio partita --------------------------------
+function avvia(cod) {
+  codice = cod;
+  tab = tabellone(codice);
+  stato = Object.assign(statoIniziale(), leggi("parole-" + codice) || {});
+  const r = leggi("parole-ruolo", sessionStorage);
+  ruolo = r && r.codice === codice ? r.ruolo : "giocatore";
+  history.replaceState(null, "", location.pathname + "?p=" + codice);
+  collega();
+  render();
+}
+
+// ------------------------------ Disegno --------------------------------------
+function render() { codice ? renderPartita() : renderHome(); }
+
+function testata(sotto) {
+  return `<header><span class="logo" aria-hidden="true">🧭</span>
+    <div><h1>Pista segreta</h1><div class="sotto">${sotto}</div></div>
+    ${codice ? `<span class="cod" aria-label="Codice partita">${esc(codice)}</span>` : ""}</header>`;
+}
+
+function renderHome() {
+  $("#app").innerHTML = `${testata("Gioco di parole a squadre")}
+    <div class="card">
+      <p>Due squadre, <b>Gialla</b> e <b>Blu</b>, e 25 parole scout. Ogni squadra ha un capo che conosce la chiave
+      e la guida con un indizio di una sola parola. Attenti alla <b>trappola</b>!</p>
+      <button class="btn pieno" data-act="crea">Crea una partita</button>
+    </div>
+    <h2>Oppure entra in una partita</h2>
+    <div class="card">
+      <label for="cod">Codice della partita</label>
+      <input type="text" id="cod" class="codice" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD">
+      <button class="btn" data-act="entra">Entra</button>
+    </div>
+    ${regole(true)}`;
+}
+
+function regole(aperte) {
+  return `<details class="card"${aperte ? "" : ""}><summary>Come si gioca</summary><ul>
+    <li>Dividetevi in due squadre, <b>Gialla</b> e <b>Blu</b>. Ogni squadra sceglie un <b>capo</b>: solo i capi
+      vedono sul telefono di che colore è ogni parola.</li>
+    <li>Tutti aprono la stessa partita (stesso codice). I capi toccano <b>Capo 🟡</b> o <b>Capo 🔵</b>.</li>
+    <li>Al suo turno il capo dà un <b>indizio</b>: una parola sola e un numero, per esempio <i>“Notte, 2”</i> per
+      LANTERNA e STELLA. Niente gesti, niente parole che stanno sul tabellone.</li>
+    <li>La squadra discute e tocca le parole (due tocchi per scoprirle), una alla volta. Può provare fino al
+      numero detto più una.</li>
+    <li>Parola della propria squadra: si continua. Parola dell'altra squadra o <b>neutra</b> (beige): il turno passa.
+      La <b>trappola</b> ☠: si perde subito!</li>
+    <li>Vince la prima squadra che scopre tutte le sue parole. Chi comincia ne ha 9, l'altra 8.</li>
+  </ul></details>`;
+}
+
+function adattaParole() {
+  for (const w of document.querySelectorAll(".c .w")) {
+    w.style.fontSize = "";
+    const spazio = w.parentElement.clientWidth - 8, largo = w.scrollWidth;
+    if (largo > spazio) w.style.fontSize = Math.max(8, 13 * spazio / largo).toFixed(1) + "px";
+  }
+}
+
+function renderPartita() {
+  const fine = esito();
+  const capo = ruolo !== "giocatore";
+  const mioTeam = capo ? ruolo.slice(-1) : null;
+  const tocca = stato.turno;
+
+  let barra;
+  if (fine) {
+    barra = `<div class="fine ${fine.vince}">Vince la squadra ${NOMI[fine.vince]}! 🎉
+      <small>${fine.trappola ? `La squadra ${NOMI[altra(fine.vince)]} è finita nella trappola ☠` : "Tutte le parole trovate."}</small></div>`;
+  } else {
+    barra = `<div class="turno ${tocca}"><span>Tocca alla squadra ${NOMI[tocca]}</span>
+      <span class="conta"><span class="pallino g" title="Parole gialle da trovare">${restano("g")}</span><span class="pallino b" title="Parole blu da trovare">${restano("b")}</span></span></div>`;
+    if (stato.indizio) barra += `<div class="indizio"><span class="muted small">Indizio</span><br><span class="parola">${esc(stato.indizio.p)}</span><span class="num">${esc(stato.indizio.n)}</span></div>`;
+  }
+
+  const vediChiave = capo || !!fine;
+  const carte = tab.parole.map((p, i) => {
+    const su = stato.scoperte.includes(i);
+    const cls = ["c"];
+    if (su || vediChiave) cls.push("k-" + tab.colori[i]);
+    if (su) cls.push("su");
+    if (i === scelta) cls.push("sel");
+    const tipo = { g: "gialla", b: "blu", n: "neutra", x: "trappola" }[tab.colori[i]];
+    const aria = su || vediChiave ? `${p}, ${tipo}${su ? ", scoperta" : ""}` : p;
+    return `<button class="${cls.join(" ")}" data-i="${i}" aria-label="${esc(aria)}" ${su || fine ? "disabled" : ""}><span class="w">${esc(p)}</span></button>`;
+  }).join("");
+
+  let comandi = "";
+  if (!fine) {
+    if (capo && mioTeam === tocca && !stato.indizio) {
+      comandi += `<div class="card"><b>Dai l'indizio alla tua squadra</b>
+        <div class="riga" style="margin-top:8px"><input type="text" id="ind" maxlength="24" placeholder="Una parola" autocomplete="off" style="flex:3">
+        <select id="num" aria-label="Numero" style="flex:1">${[1,2,3,4,5,6,7,8,9,0].map(n => `<option>${n}</option>`).join("")}<option value="∞">∞</option></select></div>
+        <button class="btn pieno" data-act="indizio">Mostra l'indizio a tutti</button>
+        <p class="small muted" style="margin:8px 0 0">Puoi anche dirlo a voce: questo campo è facoltativo.</p></div>`;
+    }
+    comandi += `<button class="btn" data-act="passa">Passa il turno alla squadra ${NOMI[altra(tocca)]}</button>`;
+  }
+
+  const r = (k, t) => `<button class="${ruolo === k ? "on" : ""}" data-ruolo="${k}">${t}</button>`;
+  comandi += `<h2>Chi sei?</h2><div class="ruoli">${r("giocatore", "Giocatore")}${r("capo-g", "Capo 🟡")}${r("capo-b", "Capo 🔵")}</div>
+    ${capo ? `<div class="avviso">Vedi la chiave: non far guardare lo schermo alla tua squadra!</div>` : ""}`;
+
+  const url = location.origin + location.pathname + "?p=" + codice;
+  const msg = `Giochiamo a "Pista segreta"! Entra qui: ${url}`;
+  comandi += `<details class="card" id="invito" ${aperto.invito ? "open" : ""}><summary>Invita gli altri (codice ${esc(codice)})</summary>
+      ${qrSvg(url)}
+      <div class="riga"><a class="btn pieno" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>
+      <button class="btn" data-act="copia">Copia link</button></div></details>
+    ${regole(false)}
+    <button class="btn" data-act="nuova">🔄 Nuova partita</button>
+    <div style="text-align:center;margin-top:6px"><button class="link" data-act="esci">Esci</button></div>`;
+
+  const reteTesto = { ok: "🟢 Collegato: le carte scoperte si vedono su tutti i telefoni",
+    attesa: "⚪ Mi sto collegando…", persa: "🟠 Senza rete: riprovo da solo. Intanto si gioca su questo telefono.",
+    spenta: "🟠 Senza rete: si gioca solo su questo telefono." }[rete];
+
+  // Conserva quello che si sta scrivendo nell'indizio
+  const bozza = $("#ind") ? $("#ind").value : "";
+  const focus = document.activeElement && document.activeElement.id === "ind";
+
+  $("#app").innerHTML = `${testata(capo ? `Capo squadra ${NOMI[mioTeam]}` : "Gioco di parole a squadre")}
+    ${barra}
+    <div class="tab${vediChiave ? " chiave" : ""}">${carte}</div>
+    <div class="stato-rete">${reteTesto}</div>
+    ${comandi}`;
+  if ($("#ind")) { $("#ind").value = bozza; if (focus) $("#ind").focus(); }
+  adattaParole();
+}
+
+function qrSvg(testo) {
+  try { const q = qrcode(0, "M"); q.addData(testo); q.make(); return `<div class="qr">${q.createSvgTag({ cellSize: 4, margin: 0, scalable: true })}</div>`; }
+  catch { return ""; }
+}
+
+// ------------------------------ Comandi --------------------------------------
+document.addEventListener("click", e => {
+  const t = e.target.closest("button, summary");
+  if (!t) { if (scelta >= 0) { scelta = -1; render(); } return; }
+  if (t.matches("summary") && t.parentElement.id === "invito") { aperto.invito = !t.parentElement.open; return; }
+  if (t.dataset.i != null) {
+    const i = +t.dataset.i;
+    if (scelta === i) { scelta = -1; scopri(i); } else { scelta = i; render(); }
+    return;
+  }
+  if (scelta >= 0 && !t.dataset.act) { scelta = -1; }
+  if (t.dataset.ruolo) {
+    const k = t.dataset.ruolo;
+    if (k !== "giocatore" && ruolo !== k && !confirm("Solo il capo squadra deve vedere la chiave. Sei il capo?")) return;
+    ruolo = k; scrivi("parole-ruolo", { codice, ruolo }, sessionStorage); render();
+    return;
+  }
+  const act = t.dataset.act;
+  if (act === "crea") vai(nuovoCodice());
+  else if (act === "entra") {
+    const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (c.length !== 4) { alert("Il codice ha 4 caratteri."); return; }
+    vai(c);
+  } else if (act === "passa") { scelta = -1; cambia(s => { s.turno = altra(s.turno); s.indizio = null; }); }
+  else if (act === "indizio") {
+    const p = $("#ind").value.trim();
+    if (!p) { $("#ind").focus(); return; }
+    if (/\s/.test(p)) { alert("L'indizio è una parola sola."); return; }
+    if (tab.parole.some((w, i) => !stato.scoperte.includes(i) && w.toLowerCase() === p.toLowerCase())) { alert("Quella parola è sul tabellone!"); return; }
+    const n = $("#num").value;
+    cambia(s => { s.indizio = { p, n, t: s.turno }; });
+  } else if (act === "copia") {
+    const url = location.origin + location.pathname + "?p=" + codice;
+    (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => alert("Link copiato!"), () => prompt("Copia il link:", url));
+  } else if (act === "nuova") {
+    if (!esito() && !confirm("Iniziare una nuova partita? Anche gli altri telefoni passeranno alla nuova.")) return;
+    const nuovo = nuovoCodice();
+    cambia(s => { s.prossima = nuovo; });
+    const via = () => vai(nuovo);
+    if (client && client.connected) setTimeout(via, 600); else via();
+  } else if (act === "esci") {
+    scrivi("parole-ruolo", null, sessionStorage);
+    location.href = location.pathname;
+  }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.id === "cod") document.querySelector('[data-act="entra"]').click();
+  if (e.key === "Enter" && e.target.id === "ind") document.querySelector('[data-act="indizio"]').click();
+});
+window.addEventListener("resize", () => { if (codice) adattaParole(); });
+
+// ------------------------------ Avvio ----------------------------------------
+(function () {
+  const p = (new URLSearchParams(location.search).get("p") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (p.length === 4) avvia(p); else render();
+  if (document.fonts) document.fonts.ready.then(() => { if (codice) adattaParole(); });
+})();
+</script>
+</body>
+</html>
