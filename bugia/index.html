@@ -3,117 +3,140 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#462678">
+<meta name="theme-color" content="#4B2BD6">
 <title>Due verità e una bugia</title>
 <link rel="icon" href="../logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* Palette dal Manuale Immagine Coordinata AGESCI 2016, come la pagina dei turni */
+  /* Stile da gioco a quiz: sfondo viola a pois, schede crema con bordo e ombra piena */
   :root {
-    --viola-scuro: #211638; --viola: #462678; --viola-medio: #6B478D; --lilla: #AEB0D9;
-    --eg: #21A067; --rosso: #D63A2C; --grigio: #ECE9E6;
-    --bg: var(--grigio); --card: #ffffff; --text: var(--viola-scuro); --muted: #6e6680;
-    --title: var(--viola); --border: #ddd8e3; --soft: #f4f2f0;
-    --vero-bg: #e3f5ec; --bugia-bg: #fbe5e2;
+    --sfondo: #4B2BD6; --sfondo2: #3A1FB8; --ink: #1D1340; --carta: #FFF8EC; --bianco: #ffffff;
+    --giallo: #FFD23F; --rosa: #FF5C8A; --ciano: #3DD6D0; --verde: #2BC48A; --rosso: #FF4F4F;
+    --vera-bg: #D7F7E8; --bugia-bg: #FFE0DC; --tenue: #5E5480;
+    --ombra: 4px 4px 0 var(--ink); --bordo: 3px solid var(--ink);
   }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #140d24; --card: var(--viola-scuro); --text: var(--grigio); --muted: var(--lilla);
-      --title: var(--lilla); --border: #3a2d57; --soft: #1a1230;
-      --vero-bg: #123527; --bugia-bg: #3d1a1a;
-    }
+    :root { --sfondo: #2E1A8F; --sfondo2: #22126E; }
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
-  body { background: var(--bg); color: var(--text); font: 16px/1.4 Roboto, Tahoma, system-ui, sans-serif; }
-  .band {
-    height: 10px; background: var(--viola);
-    background-image: repeating-linear-gradient(-67.5deg, transparent 0 3px, rgba(255,255,255,.12) 3px 4px);
+  html { background: var(--sfondo2); }
+  body {
+    min-height: 100vh; color: #fff; font: 16px/1.45 Nunito, "Trebuchet MS", system-ui, sans-serif;
+    background: radial-gradient(rgba(255,255,255,.09) 1.5px, transparent 1.6px) 0 0 / 22px 22px, linear-gradient(170deg, var(--sfondo), var(--sfondo2) 600px);
   }
-  main { max-width: 520px; margin: 0 auto; padding: 16px 16px 48px; }
-  h1, h2, .big { font-family: "Roboto Slab", Georgia, serif; }
-  header { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
-  header h1 { font-size: 1.35rem; margin: 0; color: var(--title); line-height: 1.2; }
-  header p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
-  header .esci { margin-left: auto; }
-  .chip-logo { width: 52px; height: 52px; flex: none; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 28px; }
-  h2 { font-size: 1.05rem; color: var(--title); margin: 24px 0 8px; }
-  .label { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--eg); font-weight: 700; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
-  .muted { color: var(--muted); }
-  .small { font-size: .88rem; }
+  main { max-width: 520px; margin: 0 auto; padding: 16px 16px 56px; }
+  h1, h2, .big, .domanda, .label, .esito, .btn, .verdetto, .lettera, .punti { font-family: Fredoka, Nunito, "Trebuchet MS", sans-serif; }
   p { margin: 0 0 10px; }
 
-  label { display: block; font-weight: 500; margin: 12px 0 6px; }
-  input[type=text] {
-    width: 100%; padding: 12px 14px; font: inherit; font-size: 1.05rem; color: var(--text);
-    background: var(--card); border: 2px solid var(--border); border-radius: 10px;
+  header { display: flex; align-items: center; gap: 12px; margin: 8px 0 18px; }
+  header h1 { font-size: 1.55rem; font-weight: 700; margin: 0; line-height: 1.1; text-shadow: 3px 3px 0 var(--ink); }
+  header p { margin: 4px 0 0; font-size: .92rem; opacity: .85; }
+  header .esci { margin-left: auto; }
+  .chip-logo {
+    width: 56px; height: 56px; flex: none; border-radius: 50%; background: var(--giallo); border: var(--bordo);
+    box-shadow: var(--ombra); display: grid; place-items: center; font-size: 30px; transform: rotate(-8deg);
   }
-  input.codice { text-transform: uppercase; letter-spacing: .2em; font-weight: 700; }
+  h2 { font-size: 1.3rem; font-weight: 600; margin: 26px 0 10px; text-shadow: 2px 2px 0 var(--ink); }
+  .label {
+    display: inline-block; background: var(--giallo); color: var(--ink); border: var(--bordo); border-radius: 999px;
+    padding: 2px 12px; font-weight: 600; font-size: .9rem; box-shadow: 3px 3px 0 var(--ink);
+  }
+  .card {
+    background: var(--carta); color: var(--ink); border: var(--bordo); border-radius: 18px; padding: 16px;
+    margin-bottom: 12px; box-shadow: var(--ombra);
+  }
+  .muted { color: rgba(255,255,255,.82); }
+  .card .muted { color: var(--tenue); }
+  .small { font-size: .9rem; }
+
+  label { display: block; font-weight: 700; margin: 14px 0 6px; }
+  input[type=text] {
+    width: 100%; padding: 12px 14px; font: inherit; font-size: 1.05rem; color: var(--ink);
+    background: var(--bianco); border: var(--bordo); border-radius: 12px;
+  }
+  input[type=text]:focus { outline: none; box-shadow: 0 0 0 4px var(--giallo); }
+  input.codice { text-transform: uppercase; letter-spacing: .3em; font-weight: 800; font-size: 1.4rem; text-align: center; }
   button { font: inherit; cursor: pointer; }
   .btn {
-    display: block; width: 100%; border: 0; border-radius: 12px; padding: 14px 18px; margin-top: 12px;
-    font-size: 1.08rem; font-weight: 700; background: var(--viola); color: #fff;
+    display: block; width: 100%; text-align: center; text-decoration: none; margin-top: 14px; padding: 13px 18px;
+    background: var(--giallo); color: var(--ink); border: var(--bordo); border-radius: 14px; box-shadow: var(--ombra);
+    font-size: 1.2rem; font-weight: 600; transition: transform .08s, box-shadow .08s;
   }
-  .btn.verde { background: var(--eg); }
-  .btn.chiaro { background: var(--soft); color: var(--title); border: 1px solid var(--border); }
-  .btn:disabled { opacity: .45; cursor: default; }
-  .link { background: none; border: 0; padding: 6px 8px; color: var(--muted); text-decoration: underline; font-size: .9rem; }
-  .riga { display: flex; gap: 10px; }
+  .btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn.verde { background: var(--verde); }
+  .btn.chiaro { background: var(--bianco); }
+  .btn:disabled { cursor: default; box-shadow: none; background: rgba(255,255,255,.18); color: rgba(255,255,255,.75); border-color: rgba(255,255,255,.45); }
+  .link { background: none; border: 0; padding: 6px 8px; color: inherit; opacity: .85; text-decoration: underline; font-size: .92rem; font-weight: 700; }
+  .riga { display: flex; gap: 12px; }
   .riga .btn { flex: 1; }
-  button:focus-visible, input:focus-visible { outline: 3px solid var(--viola-medio); outline-offset: 2px; }
+  button:focus-visible, a:focus-visible { outline: 3px solid var(--giallo); outline-offset: 3px; }
 
-  .rete { background: #fff4d6; color: #5a4300; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: .92rem; }
-  @media (prefers-color-scheme: dark) { .rete { background: #3b3010; color: #ffe39a; } }
+  .rete { background: var(--giallo); color: var(--ink); border: var(--bordo); border-radius: 14px; padding: 10px 14px; margin-bottom: 14px; font-weight: 700; box-shadow: var(--ombra); }
 
   .invito { text-align: center; }
-  .invito .big { font-size: 2.6rem; font-weight: 700; letter-spacing: .18em; color: var(--title); margin: 4px 0; }
-  .qr { width: 190px; height: 190px; margin: 8px auto; background: #fff; border-radius: 10px; padding: 6px; }
+  .invito .big {
+    display: inline-block; font-size: 2.8rem; font-weight: 700; letter-spacing: .2em; padding: 4px 8px 4px 18px; margin: 10px 0 6px;
+    background: var(--giallo); border: 3px dashed var(--ink); border-radius: 14px; transform: rotate(-2deg);
+  }
+  .qr { width: 190px; height: 190px; margin: 10px auto; background: #fff; border: var(--bordo); border-radius: 14px; padding: 8px; }
   .qr svg { width: 100%; height: 100%; display: block; }
 
   .giocatori { list-style: none; padding: 0; margin: 0; }
-  .giocatori li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .giocatori li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 2px dashed #e2d9c8; }
   .giocatori li:last-child { border-bottom: 0; }
-  .giocatori .nome { flex: 1; font-weight: 500; overflow-wrap: anywhere; }
-  .giocatori .off { opacity: .5; }
-  .giocatori .punti { font-weight: 700; font-family: "Roboto Slab", Georgia, serif; }
-  .giocatori .x { background: none; border: 0; color: var(--muted); font-size: 1.1rem; padding: 2px 6px; }
-  .stato { font-size: .85rem; color: var(--muted); white-space: nowrap; }
-  .stato.ok { color: var(--eg); font-weight: 700; }
+  .giocatori .nome { flex: 1; font-weight: 700; overflow-wrap: anywhere; }
+  .giocatori .off { opacity: .45; }
+  .giocatori .punti { min-width: 2.2em; text-align: center; background: var(--giallo); border: 2px solid var(--ink); border-radius: 999px; font-weight: 700; padding: 0 8px; }
+  .giocatori .x { background: none; border: 0; color: var(--tenue); font-size: 1.1rem; padding: 2px 6px; }
+  .stato { font-size: .85rem; color: var(--tenue); white-space: nowrap; }
+  .stato.ok { color: #13865A; font-weight: 800; }
 
+  .domanda { font-size: 1.6rem; font-weight: 600; line-height: 1.2; margin: 12px 0 14px; text-shadow: 2px 2px 0 var(--ink); }
+  .domanda b { color: var(--giallo); }
   .frase {
-    display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; color: inherit;
-    background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px;
-    font-size: 1.08rem;
+    display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left;
+    background: var(--carta); color: var(--ink); border: var(--bordo); border-radius: 18px; box-shadow: var(--ombra);
+    padding: 14px; margin-bottom: 14px; font-size: 1.12rem; font-weight: 600; transition: transform .1s, box-shadow .1s, background .15s;
   }
-  .frase .lettera {
-    flex: none; width: 2em; height: 2em; border-radius: 50%; display: grid; place-items: center;
-    background: var(--soft); color: var(--title); font-weight: 700; font-family: "Roboto Slab", Georgia, serif;
-  }
-  .frase .testo { flex: 1; overflow-wrap: anywhere; padding-top: .2em; }
-  .frase.scelta { border-color: var(--viola); background: color-mix(in srgb, var(--lilla) 25%, var(--card)); }
-  .frase.scelta .lettera { background: var(--viola); color: #fff; }
+  button.frase:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
   button.frase:disabled { cursor: default; }
-  .frase.vera { border-color: var(--eg); background: var(--vero-bg); }
-  .frase.bugia { border-color: var(--rosso); background: var(--bugia-bg); }
-  .verdetto { display: inline-block; font-size: .75rem; font-weight: 700; letter-spacing: .08em; border-radius: 6px; padding: 2px 8px; margin-bottom: 4px; color: #fff; }
-  .vera .verdetto { background: var(--eg); }
-  .bugia .verdetto { background: var(--rosso); }
-  .votanti { margin-top: 6px; font-size: .85rem; color: var(--muted); }
+  .frase .lettera {
+    flex: none; width: 2.1em; height: 2.1em; border-radius: 50%; display: grid; place-items: center;
+    border: var(--bordo); font-weight: 700; font-size: 1.05rem;
+  }
+  .lettera.l0 { background: var(--rosa); } .lettera.l1 { background: var(--ciano); } .lettera.l2 { background: var(--giallo); }
+  .frase .testo { flex: 1; overflow-wrap: anywhere; padding-top: .25em; }
+  .frase.scelta { background: var(--giallo); transform: rotate(-1deg) scale(1.02); }
+  .frase.vera { background: var(--vera-bg); }
+  .frase.bugia { background: var(--bugia-bg); animation: scuoti .5s .2s; }
+  .verdetto {
+    display: inline-block; font-size: .95rem; font-weight: 700; letter-spacing: .08em; border: 3px solid currentColor;
+    border-radius: 8px; padding: 0 8px; margin-bottom: 6px; transform: rotate(-5deg); animation: timbro .35s ease-out both;
+  }
+  .vera .verdetto { color: #13865A; }
+  .bugia .verdetto { color: #D92B2B; }
+  .votanti { margin-top: 6px; font-size: .88rem; font-weight: 400; color: var(--tenue); }
 
-  .esito { text-align: center; font-size: 1.15rem; font-weight: 700; padding: 14px; border-radius: 14px; margin-bottom: 10px; }
-  .esito.si { background: var(--vero-bg); }
-  .esito.no { background: var(--bugia-bg); }
-  .domanda { font-size: 1.3rem; margin: 4px 0 12px; color: var(--title); }
-  .mie { margin: 0; padding-left: 0; list-style: none; }
+  .esito {
+    text-align: center; font-size: 1.35rem; font-weight: 600; padding: 14px; color: var(--ink);
+    border: var(--bordo); border-radius: 18px; box-shadow: var(--ombra); margin-bottom: 16px; animation: salta .4s ease-out both;
+  }
+  .esito.si { background: var(--verde); }
+  .esito.no { background: var(--rosa); }
+  .mie { margin: 0; padding-left: 0; list-style: none; font-weight: 600; }
   .mie li { padding: 4px 0; }
-  details summary { cursor: pointer; font-weight: 700; color: var(--title); }
+  details summary { cursor: pointer; font-weight: 800; font-size: 1.05rem; }
+
+  @keyframes scuoti { 0%,100% { transform: none; } 20%,60% { transform: translateX(-6px) rotate(-1deg); } 40%,80% { transform: translateX(6px) rotate(1deg); } }
+  @keyframes timbro { from { transform: rotate(-5deg) scale(2.2); opacity: 0; } to { transform: rotate(-5deg) scale(1); opacity: 1; } }
+  @keyframes salta { from { transform: scale(.7); opacity: 0; } 70% { transform: scale(1.06); } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
-<div class="band"></div>
 <main>
   <div id="s-rete"></div>
   <div id="s-testa"></div>
@@ -549,11 +572,11 @@ function renderGioco() {
         const msg = `Giochiamo a "Due verità e una bugia"! Entra qui: ${url}`;
         const qr = qrSvg(url);
         return `<div class="card invito">
-          <div class="label">Fai entrare gli altri</div>
+          <h2 style="margin-top:0;text-shadow:none">Fai entrare gli altri</h2>
           <div class="big">${esc(codice)}</div>
           ${qr ? `<div class="qr">${qr}</div><p class="small muted">Inquadra il QR con la fotocamera, oppure:</p>` : ""}
           <div class="riga">
-            <a class="btn verde" style="text-decoration:none;text-align:center" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>
+            <a class="btn verde" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>
             <button class="btn chiaro" data-act="copia">Copia link</button>
           </div>
           <p class="small muted" style="margin-top:12px">Tieni questo telefono acceso con la pagina aperta: la partita vive qui.</p>
@@ -580,7 +603,7 @@ function renderGioco() {
 
   const t = v.turno;
   const sonoAutore = t.autore === v.io;
-  const testa = `<div class="label">Turno ${t.n} di ${t.tot}</div>`;
+  const testa = `<div><span class="label">Turno ${t.n} di ${t.tot}</span></div>`;
   if (v.fase === "voto") {
     const elettori = v.giocatori.filter(g => g.online && g.id !== t.autore);
     const fatti = elettori.filter(g => g.votato).length;
@@ -589,7 +612,7 @@ function renderGioco() {
       <div class="domanda big">${sonoAutore ? "Queste sono le tue frasi: non tradirti!" : `Qual è la bugia di <b>${esc(t.nome)}</b>?`}</div>
       ${t.frasi.map((f, i) => `
         <button class="frase${v.mioVoto === i ? " scelta" : ""}" data-act="voto" data-i="${i}" ${sonoAutore ? "disabled" : ""}>
-          <span class="lettera">${LETTERE[i]}</span><span class="testo">${esc(f)}</span>
+          <span class="lettera l${i}">${LETTERE[i]}</span><span class="testo">${esc(f)}</span>
         </button>`).join("")}
       <p class="small muted">${sonoAutore ? "" : v.mioVoto == null ? "Tocca la frase che secondo te è falsa." : "Puoi cambiare idea finché la bugia non viene svelata. "}
         Hanno votato ${fatti} su ${elettori.length}.</p>`);
@@ -613,7 +636,7 @@ function renderGioco() {
     ${esito}
     ${t.frasi.map((f, i) => `
       <div class="frase ${i === s.bugia ? "bugia" : "vera"}">
-        <span class="lettera">${LETTERE[i]}</span>
+        <span class="lettera l${i}">${LETTERE[i]}</span>
         <span class="testo"><span class="verdetto">${i === s.bugia ? "BUGIA" : "VERA"}</span><br>${esc(f)}
           ${perFrase[i].length ? `<div class="votanti">Votata da: ${perFrase[i].map(esc).join(", ")}</div>` : ""}</span>
       </div>`).join("")}`);
