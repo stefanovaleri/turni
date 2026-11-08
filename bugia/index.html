@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#462678">
+<title>Due verità e una bugia</title>
+<link rel="icon" href="../logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* Palette dal Manuale Immagine Coordinata AGESCI 2016, come la pagina dei turni */
+  :root {
+    --viola-scuro: #211638; --viola: #462678; --viola-medio: #6B478D; --lilla: #AEB0D9;
+    --eg: #21A067; --rosso: #D63A2C; --grigio: #ECE9E6;
+    --bg: var(--grigio); --card: #ffffff; --text: var(--viola-scuro); --muted: #6e6680;
+    --title: var(--viola); --border: #ddd8e3; --soft: #f4f2f0;
+    --vero-bg: #e3f5ec; --bugia-bg: #fbe5e2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #140d24; --card: var(--viola-scuro); --text: var(--grigio); --muted: var(--lilla);
+      --title: var(--lilla); --border: #3a2d57; --soft: #1a1230;
+      --vero-bg: #123527; --bugia-bg: #3d1a1a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.4 Roboto, Tahoma, system-ui, sans-serif; }
+  .band {
+    height: 10px; background: var(--viola);
+    background-image: repeating-linear-gradient(-67.5deg, transparent 0 3px, rgba(255,255,255,.12) 3px 4px);
+  }
+  main { max-width: 520px; margin: 0 auto; padding: 16px 16px 48px; }
+  h1, h2, .big { font-family: "Roboto Slab", Georgia, serif; }
+  header { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
+  header h1 { font-size: 1.35rem; margin: 0; color: var(--title); line-height: 1.2; }
+  header p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+  header .esci { margin-left: auto; }
+  .chip-logo { width: 52px; height: 52px; flex: none; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 28px; }
+  h2 { font-size: 1.05rem; color: var(--title); margin: 24px 0 8px; }
+  .label { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--eg); font-weight: 700; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
+  .muted { color: var(--muted); }
+  .small { font-size: .88rem; }
+  p { margin: 0 0 10px; }
+
+  label { display: block; font-weight: 500; margin: 12px 0 6px; }
+  input[type=text] {
+    width: 100%; padding: 12px 14px; font: inherit; font-size: 1.05rem; color: var(--text);
+    background: var(--card); border: 2px solid var(--border); border-radius: 10px;
+  }
+  input.codice { text-transform: uppercase; letter-spacing: .2em; font-weight: 700; }
+  button { font: inherit; cursor: pointer; }
+  .btn {
+    display: block; width: 100%; border: 0; border-radius: 12px; padding: 14px 18px; margin-top: 12px;
+    font-size: 1.08rem; font-weight: 700; background: var(--viola); color: #fff;
+  }
+  .btn.verde { background: var(--eg); }
+  .btn.chiaro { background: var(--soft); color: var(--title); border: 1px solid var(--border); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .link { background: none; border: 0; padding: 6px 8px; color: var(--muted); text-decoration: underline; font-size: .9rem; }
+  .riga { display: flex; gap: 10px; }
+  .riga .btn { flex: 1; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--viola-medio); outline-offset: 2px; }
+
+  .rete { background: #fff4d6; color: #5a4300; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: .92rem; }
+  @media (prefers-color-scheme: dark) { .rete { background: #3b3010; color: #ffe39a; } }
+
+  .invito { text-align: center; }
+  .invito .big { font-size: 2.6rem; font-weight: 700; letter-spacing: .18em; color: var(--title); margin: 4px 0; }
+  .qr { width: 190px; height: 190px; margin: 8px auto; background: #fff; border-radius: 10px; padding: 6px; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+
+  .giocatori { list-style: none; padding: 0; margin: 0; }
+  .giocatori li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .giocatori li:last-child { border-bottom: 0; }
+  .giocatori .nome { flex: 1; font-weight: 500; overflow-wrap: anywhere; }
+  .giocatori .off { opacity: .5; }
+  .giocatori .punti { font-weight: 700; font-family: "Roboto Slab", Georgia, serif; }
+  .giocatori .x { background: none; border: 0; color: var(--muted); font-size: 1.1rem; padding: 2px 6px; }
+  .stato { font-size: .85rem; color: var(--muted); white-space: nowrap; }
+  .stato.ok { color: var(--eg); font-weight: 700; }
+
+  .frase {
+    display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; color: inherit;
+    background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    font-size: 1.08rem;
+  }
+  .frase .lettera {
+    flex: none; width: 2em; height: 2em; border-radius: 50%; display: grid; place-items: center;
+    background: var(--soft); color: var(--title); font-weight: 700; font-family: "Roboto Slab", Georgia, serif;
+  }
+  .frase .testo { flex: 1; overflow-wrap: anywhere; padding-top: .2em; }
+  .frase.scelta { border-color: var(--viola); background: color-mix(in srgb, var(--lilla) 25%, var(--card)); }
+  .frase.scelta .lettera { background: var(--viola); color: #fff; }
+  button.frase:disabled { cursor: default; }
+  .frase.vera { border-color: var(--eg); background: var(--vero-bg); }
+  .frase.bugia { border-color: var(--rosso); background: var(--bugia-bg); }
+  .verdetto { display: inline-block; font-size: .75rem; font-weight: 700; letter-spacing: .08em; border-radius: 6px; padding: 2px 8px; margin-bottom: 4px; color: #fff; }
+  .vera .verdetto { background: var(--eg); }
+  .bugia .verdetto { background: var(--rosso); }
+  .votanti { margin-top: 6px; font-size: .85rem; color: var(--muted); }
+
+  .esito { text-align: center; font-size: 1.15rem; font-weight: 700; padding: 14px; border-radius: 14px; margin-bottom: 10px; }
+  .esito.si { background: var(--vero-bg); }
+  .esito.no { background: var(--bugia-bg); }
+  .domanda { font-size: 1.3rem; margin: 4px 0 12px; color: var(--title); }
+  .mie { margin: 0; padding-left: 0; list-style: none; }
+  .mie li { padding: 4px 0; }
+  details summary { cursor: pointer; font-weight: 700; color: var(--title); }
+</style>
+</head>
+<body>
+<div class="band"></div>
+<main>
+  <div id="s-rete"></div>
+  <div id="s-testa"></div>
+  <div id="s-gioco"></div>
+  <div id="s-frasi"></div>
+  <div id="s-lista"></div>
+  <div id="s-azioni"></div>
+  <noscript>Per giocare serve JavaScript.</noscript>
+</main>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Rete peer-to-peer: il telefono di chi crea la partita ("capo partita") tiene
+// tutto lo stato; gli altri si collegano a lui con PeerJS e ricevono una vista
+// che non contiene le frasi degli altri né i voti finché non si svela.
+// ---------------------------------------------------------------------------
+const PREFISSO = "agesci-turni-bugia-";
+const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const MAX_FRASE = 140, MAX_NOME = 20;
+const LETTERE = ["A", "B", "C"];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const leggi = (k, area = localStorage) => { try { return JSON.parse(area.getItem(k)); } catch { return null; } };
+const scrivi = (k, v, area = localStorage) => { try { v == null ? area.removeItem(k) : area.setItem(k, JSON.stringify(v)); } catch {} };
+const mescola = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const nuovoCodice = () => Array.from({ length: 4 }, () => ALFABETO[Math.floor(Math.random() * ALFABETO.length)]).join("");
+const pulisci = (s, max) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+
+let mioId = leggi("bugia-id");
+if (!mioId) { mioId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)); scrivi("bugia-id", mioId); }
+let mioNome = leggi("bugia-nome") || "";
+
+let ruolo = null;          // null (schermata iniziale) | "host" | "ospite"
+let codice = null;
+let peer = null;
+let rete = "attesa";       // "ok" | "attesa" | "persa" | "assente"
+let vista = null;          // ultima vista ricevuta (o calcolata, per l'host)
+let mieFrasi = null;       // le mie frasi già inviate [vera, vera, bugia]
+let modifica = false;      // sto modificando le frasi già inviate
+let bozza = ["", "", ""];
+let bozzaHome = { nome: mioNome, codice: "" };
+
+// ------------------------------- Host ---------------------------------------
+let S = null;              // stato completo della partita (solo sull'host)
+const conns = new Map();   // DataConnection -> id giocatore
+let timerSvela = null, wakeLock = null;
+
+function online() {
+  const s = new Set(conns.values());
+  s.add(mioId);
+  return s;
+}
+function autoreCorrente() {
+  return (S.fase === "voto" || S.fase === "svela") ? S.ordine[S.turno] : null;
+}
+function salvaHost() { S.t = Date.now(); scrivi("bugia-host", S); }
+
+function vistaPer(id) {
+  const on = online();
+  const autore = autoreCorrente();
+  const v = {
+    codice: S.codice, fase: S.fase, io: id, host: mioId,
+    giocatori: Object.entries(S.giocatori).map(([gid, g]) => ({
+      id: gid, nome: g.nome, pronto: !!g.frasi, punti: g.punti, online: on.has(gid),
+      votato: S.fase === "voto" && gid in S.voti, inGioco: S.ordine.includes(gid),
+    })),
+    turno: null, mioVoto: S.voti[id] ?? null, svela: null,
+  };
+  if (autore) {
+    const g = S.giocatori[autore];
+    v.turno = { autore, nome: g.nome, n: S.turno + 1, tot: S.ordine.length, frasi: S.ordine_frasi.map(k => g.frasi[k]) };
+  }
+  if (S.fase === "svela") v.svela = { bugia: S.ordine_frasi.indexOf(2), voti: S.voti };
+  return v;
+}
+
+function trasmetti() {
+  salvaHost();
+  for (const [c, id] of conns) {
+    if (c.open) { try { c.send({ t: "stato", s: vistaPer(id), mie: S.giocatori[id]?.frasi ?? null }); } catch {} }
+  }
+  vista = vistaPer(mioId);
+  mieFrasi = S.giocatori[mioId]?.frasi ?? null;
+  render();
+}
+
+function avantiTurno() {
+  S.turno++;
+  while (S.turno < S.ordine.length && !S.giocatori[S.ordine[S.turno]]) S.turno++;
+  S.voti = {};
+  if (S.turno >= S.ordine.length) { S.fase = "fine"; S.ordine_frasi = null; return; }
+  S.fase = "voto";
+  S.ordine_frasi = mescola([0, 1, 2]);   // 2 = la bugia
+}
+
+function svela() {
+  clearTimeout(timerSvela);
+  if (S.fase !== "voto") return;
+  const autore = autoreCorrente();
+  for (const [v, i] of Object.entries(S.voti)) {
+    if (!S.giocatori[v]) continue;
+    if (S.ordine_frasi[i] === 2) S.giocatori[v].punti++;          // ha scovato la bugia
+    else if (S.giocatori[autore]) S.giocatori[autore].punti++;   // l'autore l'ha ingannato
+  }
+  S.fase = "svela";
+}
+
+function controllaVoti() {
+  clearTimeout(timerSvela);
+  const autore = autoreCorrente();
+  const elettori = [...online()].filter(id => id !== autore && S.giocatori[id]);
+  if (elettori.length && elettori.every(id => id in S.voti)) {
+    timerSvela = setTimeout(() => { if (S.fase === "voto") { svela(); trasmetti(); } }, 1500);
+  }
+}
+
+// Azioni dei giocatori (anche dell'host stesso). Restituisce true se lo stato è cambiato.
+function azione(id, m) {
+  const g = S.giocatori[id];
+  if (!g || !m) return false;
+  const capo = id === mioId;
+  switch (m.t) {
+    case "frasi": {
+      if (S.fase === "fine") return false;
+      if (S.fase !== "lobby" && S.ordine.includes(id)) return false;   // il suo turno è già in calendario
+      const f = (Array.isArray(m.frasi) ? m.frasi : []).slice(0, 3).map(x => pulisci(x, MAX_FRASE));
+      if (f.length !== 3 || f.some(x => !x)) return false;
+      g.frasi = f;
+      if (S.fase !== "lobby") S.ordine.push(id);   // arrivato a partita iniziata: gioca in coda
+      return true;
+    }
+    case "voto": {
+      if (S.fase !== "voto" || id === autoreCorrente()) return false;
+      const i = Number(m.i);
+      if (![0, 1, 2].includes(i)) return false;
+      S.voti[id] = i;
+      controllaVoti();
+      return true;
+    }
+    case "inizia": {
+      if (!capo || S.fase !== "lobby") return false;
+      const pronti = Object.keys(S.giocatori).filter(k => S.giocatori[k].frasi);
+      if (pronti.length < 2) return false;
+      for (const k in S.giocatori) S.giocatori[k].punti = 0;
+      S.ordine = mescola(pronti);
+      S.turno = -1;
+      avantiTurno();
+      return true;
+    }
+    case "svela":
+      if (!capo) return false;
+      svela();
+      return true;
+    case "avanti":
+      if (!capo || S.fase !== "svela") return false;
+      avantiTurno();
+      return true;
+    case "ancora":
+      if (!capo || S.fase !== "fine") return false;
+      for (const k in S.giocatori) { S.giocatori[k].frasi = null; S.giocatori[k].punti = 0; }
+      Object.assign(S, { fase: "lobby", ordine: [], turno: -1, voti: {}, ordine_frasi: null });
+      return true;
+    case "rimuovi": {
+      if (!capo || m.id === mioId || online().has(m.id)) return false;
+      if (S.fase !== "lobby" && S.fase !== "fine") return false;
+      delete S.giocatori[m.id];
+      return true;
+    }
+  }
+  return false;
+}
+
+function daOspite(c, m) {
+  if (!m || typeof m !== "object") return;
+  if (m.t === "ciao") {
+    const id = pulisci(m.id, 64), nome = pulisci(m.nome, MAX_NOME);
+    if (!id || !nome || id === mioId) { try { c.close(); } catch {} return; }
+    for (const [altra, gid] of conns) if (gid === id && altra !== c) { conns.delete(altra); try { altra.close(); } catch {} }
+    conns.set(c, id);
+    if (S.giocatori[id]) S.giocatori[id].nome = nome;
+    else S.giocatori[id] = { nome, frasi: null, punti: 0 };
+    if (S.fase === "voto") controllaVoti();
+    trasmetti();
+    return;
+  }
+  const id = conns.get(c);
+  if (id && azione(id, m)) trasmetti();
+}
+
+function apriHost() {
+  rete = "attesa";
+  peer = new Peer(PREFISSO + codice);
+  peer.on("open", () => { rete = "ok"; render(); });
+  peer.on("connection", c => {
+    c.on("data", m => daOspite(c, m));
+    const chiudi = () => {
+      if (!conns.has(c)) return;
+      conns.delete(c);
+      if (S.fase === "voto") controllaVoti();
+      trasmetti();
+    };
+    c.on("close", chiudi);
+    c.on("error", chiudi);
+  });
+  peer.on("disconnected", () => {
+    rete = "persa"; render();
+    setTimeout(() => { if (peer && !peer.destroyed && peer.disconnected) peer.reconnect(); }, 1500);
+  });
+  peer.on("error", e => {
+    if (e.type === "unavailable-id") {
+      // Il server ricorda ancora il vecchio collegamento (es. dopo un ricaricamento): riprovo.
+      peer.destroy(); rete = "attesa"; render();
+      setTimeout(apriHost, 3000);
+    } else if (["network", "server-error", "socket-error", "socket-closed"].includes(e.type)) {
+      rete = "persa"; render();
+      setTimeout(() => { if (peer && !peer.destroyed && peer.disconnected) peer.reconnect(); }, 3000);
+    }
+  });
+}
+
+function avviaHost(salvato) {
+  ruolo = "host";
+  if (salvato) { S = salvato; codice = S.codice; }
+  else {
+    codice = nuovoCodice();
+    S = { codice, fase: "lobby", giocatori: {}, ordine: [], turno: -1, voti: {}, ordine_frasi: null };
+  }
+  S.giocatori[mioId] ??= { nome: mioNome, frasi: null, punti: 0 };
+  S.giocatori[mioId].nome = mioNome;
+  scrivi("bugia-ruolo", { ruolo, codice }, sessionStorage);
+  history.replaceState(null, "", location.pathname);
+  tieniAcceso();
+  apriHost();
+  trasmetti();
+}
+
+async function tieniAcceso() {
+  try { if ("wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } } catch {}
+}
+
+// ------------------------------ Ospite --------------------------------------
+let conn = null, timerRiprova = null;
+
+function riprova(ms) {
+  clearTimeout(timerRiprova);
+  timerRiprova = setTimeout(connetti, ms);
+}
+
+function connetti() {
+  clearTimeout(timerRiprova);
+  if (ruolo !== "ospite" || !peer || peer.destroyed) return;
+  if (conn && conn.open) return;
+  if (peer.disconnected) { peer.reconnect(); riprova(4000); return; }
+  if (!peer.open) { riprova(1000); return; }
+  if (conn) { try { conn.close(); } catch {} }
+  const c = peer.connect(PREFISSO + codice, { reliable: true });
+  conn = c;
+  riprova(8000);   // se non si apre entro 8 s, ritento
+  c.on("open", () => {
+    if (conn !== c) return;
+    clearTimeout(timerRiprova);
+    rete = "ok";
+    c.send({ t: "ciao", id: mioId, nome: mioNome });
+    render();
+  });
+  c.on("data", m => {
+    if (conn !== c || !m || m.t !== "stato") return;
+    vista = m.s; mieFrasi = m.mie;
+    if (mieFrasi && !modifica) bozza = mieFrasi.slice();
+    render();
+  });
+  const persa = () => {
+    if (conn !== c) return;
+    conn = null;
+    if (rete === "ok") rete = "persa";
+    render();
+    riprova(1500);
+  };
+  c.on("close", persa);
+  c.on("error", persa);
+}
+
+function avviaOspite(cod) {
+  ruolo = "ospite"; codice = cod; rete = "attesa";
+  scrivi("bugia-ruolo", { ruolo, codice }, sessionStorage);
+  history.replaceState(null, "", location.pathname + "?p=" + codice);
+  peer = new Peer();
+  peer.on("open", () => connetti());
+  peer.on("disconnected", () => setTimeout(() => { if (peer && !peer.destroyed && peer.disconnected) peer.reconnect(); }, 1500));
+  peer.on("error", e => {
+    if (e.type === "peer-unavailable") { rete = "assente"; conn = null; render(); riprova(3000); }
+    else if (["network", "server-error", "socket-error", "socket-closed"].includes(e.type)) { rete = "persa"; render(); riprova(3000); }
+  });
+  render();
+}
+
+// ------------------------------ Comandi -------------------------------------
+function invia(m) {
+  if (ruolo === "host") { if (azione(mioId, m)) trasmetti(); }
+  else if (conn && conn.open) conn.send(m);
+  else alert("Non sei collegato alla partita: aspetta qualche secondo e riprova.");
+}
+
+function esci() {
+  if (ruolo === "host" && !confirm("Chiudere la partita? Gli altri verranno scollegati.")) return;
+  if (ruolo === "host") scrivi("bugia-host", null);
+  scrivi("bugia-ruolo", null, sessionStorage);
+  try { peer?.destroy(); } catch {}
+  location.href = location.pathname;
+}
+
+function linkInvito() { return location.origin + location.pathname + "?p=" + codice; }
+
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.bozza != null) bozza[+t.dataset.bozza] = t.value;
+  if (t.id === "nome") bozzaHome.nome = t.value;
+  if (t.id === "cod") bozzaHome.codice = t.value;
+});
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]");
+  if (!b || b.disabled) return;
+  const act = b.dataset.act;
+  if (act === "crea" || act === "entra" || act === "riprendi") {
+    const nome = pulisci(bozzaHome.nome, MAX_NOME);
+    if (!nome) { alert("Scrivi il tuo nome."); $("#nome")?.focus(); return; }
+    mioNome = nome; scrivi("bugia-nome", nome);
+    if (act === "crea") avviaHost(null);
+    else if (act === "riprendi") avviaHost(leggi("bugia-host"));
+    else {
+      const cod = pulisci(bozzaHome.codice, 8).toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (cod.length !== 4) { alert("Il codice della partita ha 4 caratteri."); $("#cod")?.focus(); return; }
+      avviaOspite(cod);
+    }
+  } else if (act === "frasi") {
+    const f = bozza.map(x => pulisci(x, MAX_FRASE));
+    if (f.some(x => !x)) { alert("Scrivi tutte e tre le frasi."); return; }
+    modifica = false;
+    invia({ t: "frasi", frasi: f });
+  } else if (act === "modifica") { modifica = true; bozza = (mieFrasi || bozza).slice(); render(); }
+  else if (act === "annulla") { modifica = false; render(); }
+  else if (act === "voto") invia({ t: "voto", i: +b.dataset.i });
+  else if (act === "rimuovi") invia({ t: "rimuovi", id: b.dataset.id });
+  else if (["inizia", "svela", "avanti", "ancora"].includes(act)) invia({ t: act });
+  else if (act === "esci") esci();
+  else if (act === "copia") {
+    const url = linkInvito();
+    (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
+      .then(() => { b.textContent = "Link copiato ✓"; setTimeout(() => (b.textContent = "Copia link"), 2000); })
+      .catch(() => prompt("Copia il link:", url));
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (ruolo === "ospite" && !(conn && conn.open)) connetti();
+  if (ruolo === "host") {
+    tieniAcceso();
+    if (peer && !peer.destroyed && peer.disconnected) peer.reconnect();
+  }
+});
+
+// ------------------------------ Disegno -------------------------------------
+// Ogni sezione si ridisegna solo se cambia la sua "chiave": così chi sta
+// scrivendo le frasi non perde il testo quando entra un altro giocatore.
+const chiavi = {};
+function sezione(id, chiave, html) {
+  if (chiavi[id] === chiave) return;
+  chiavi[id] = chiave;
+  $("#" + id).innerHTML = typeof html === "function" ? html() : html;
+}
+
+function render() {
+  if (!ruolo) return renderHome();
+  sezione("s-rete", "r" + rete + codice, () => {
+    if (rete === "ok") return "";
+    if (ruolo === "host") return `<div class="rete">${rete === "attesa" ? "Apro la partita…" : "Connessione persa, riprovo…"}</div>`;
+    if (rete === "assente") return `<div class="rete">Non trovo la partita <b>${esc(codice)}</b>. Il telefono di chi l'ha creata deve avere la pagina aperta. Riprovo…</div>`;
+    return `<div class="rete">${rete === "attesa" ? "Mi collego alla partita…" : "Connessione persa, riprovo…"}</div>`;
+  });
+  sezione("s-testa", "t" + codice + mioNome + ruolo, `
+    <header>
+      <div class="chip-logo" aria-hidden="true">🤥</div>
+      <div><h1>Due verità e una bugia</h1><p>Partita <b>${esc(codice)}</b> · ${esc(mioNome)}${ruolo === "host" ? " (capo partita)" : ""}</p></div>
+      <button class="link esci" data-act="esci">${ruolo === "host" ? "Chiudi" : "Esci"}</button>
+    </header>`);
+  if (!vista) {
+    sezione("s-gioco", "vuoto", ""); sezione("s-frasi", "vuoto", ""); sezione("s-lista", "vuoto", ""); sezione("s-azioni", "vuoto", "");
+    return;
+  }
+  renderGioco();
+  renderFrasi();
+  renderLista();
+  renderAzioni();
+}
+
+function renderHome() {
+  const p = new URLSearchParams(location.search).get("p");
+  const salvato = leggi("bugia-host");
+  const recente = salvato && salvato.t && Date.now() - salvato.t < 12 * 3600e3;
+  if (p) bozzaHome.codice = p.toUpperCase();
+  sezione("s-testa", "home", `
+    <header>
+      <div class="chip-logo" aria-hidden="true">🤥</div>
+      <div><h1>Due verità e una bugia</h1><p>Il gioco per conoscersi meglio</p></div>
+    </header>`);
+  sezione("s-gioco", "home" + !!p + !!recente, () => `
+    <div class="card">
+      <p>Ognuno scrive tre frasi su di sé: <b>due vere e una falsa</b>. A turno si leggono le frasi di un giocatore e gli altri, dal proprio telefono, votano quale secondo loro è la bugia.</p>
+      <p class="small muted">Chi scova la bugia prende 1 punto; chi scrive le frasi prende 1 punto per ogni persona che inganna.</p>
+      <label for="nome">Il tuo nome</label>
+      <input type="text" id="nome" maxlength="${MAX_NOME}" autocomplete="given-name" value="${esc(bozzaHome.nome)}" placeholder="Per esempio: Giulia">
+      ${p ? `
+        <p class="small muted" style="margin-top:12px">Stai entrando nella partita <b>${esc(bozzaHome.codice)}</b>.</p>
+        <button class="btn verde" data-act="entra">Entra nella partita</button>
+        <input type="hidden" id="cod" value="${esc(bozzaHome.codice)}">` : `
+        <button class="btn" data-act="crea">Crea una nuova partita</button>
+        ${recente ? `<button class="btn chiaro" data-act="riprendi">Riprendi la partita ${esc(salvato.codice)}</button>` : ""}
+        <h2>Oppure entra in una partita</h2>
+        <label for="cod">Codice della partita</label>
+        <input type="text" id="cod" class="codice" maxlength="4" autocomplete="off" autocapitalize="characters" value="${esc(bozzaHome.codice)}" placeholder="ABCD">
+        <button class="btn verde" data-act="entra">Entra</button>`}
+    </div>`);
+  for (const id of ["s-rete", "s-frasi", "s-lista", "s-azioni"]) sezione(id, "home", "");
+}
+
+function qrSvg(testo) {
+  try { const q = qrcode(0, "M"); q.addData(testo); q.make(); return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); }
+  catch { return ""; }
+}
+
+function renderGioco() {
+  const v = vista;
+  if (v.fase === "lobby") {
+    if (ruolo === "host") {
+      sezione("s-gioco", "invito" + codice, () => {
+        const url = linkInvito();
+        const msg = `Giochiamo a "Due verità e una bugia"! Entra qui: ${url}`;
+        const qr = qrSvg(url);
+        return `<div class="card invito">
+          <div class="label">Fai entrare gli altri</div>
+          <div class="big">${esc(codice)}</div>
+          ${qr ? `<div class="qr">${qr}</div><p class="small muted">Inquadra il QR con la fotocamera, oppure:</p>` : ""}
+          <div class="riga">
+            <a class="btn verde" style="text-decoration:none;text-align:center" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>
+            <button class="btn chiaro" data-act="copia">Copia link</button>
+          </div>
+          <p class="small muted" style="margin-top:12px">Tieni questo telefono acceso con la pagina aperta: la partita vive qui.</p>
+        </div>`;
+      });
+    } else {
+      sezione("s-gioco", "attesa", `<div class="card"><p><b>Sei dentro!</b> Scrivi le tue frasi e aspetta che il capo partita faccia iniziare il gioco.</p></div>`);
+    }
+    return;
+  }
+  if (v.fase === "fine") {
+    const cl = v.giocatori.filter(g => g.inGioco || g.punti).sort((a, b) => b.punti - a.punti);
+    const medaglie = ["🥇", "🥈", "🥉"];
+    let pos = 0, prev = null;
+    const righe = cl.map((g, i) => {
+      if (g.punti !== prev) { pos = i; prev = g.punti; }
+      return `<li><span>${medaglie[pos] || (pos + 1) + "°"}</span><span class="nome">${esc(g.nome)}${g.id === v.io ? " (tu)" : ""}</span><span class="punti">${g.punti}</span></li>`;
+    }).join("");
+    sezione("s-gioco", "fine" + JSON.stringify(cl), `
+      <h2>Classifica finale</h2>
+      <div class="card"><ul class="giocatori">${righe}</ul></div>`);
+    return;
+  }
+
+  const t = v.turno;
+  const sonoAutore = t.autore === v.io;
+  const testa = `<div class="label">Turno ${t.n} di ${t.tot}</div>`;
+  if (v.fase === "voto") {
+    const elettori = v.giocatori.filter(g => g.online && g.id !== t.autore);
+    const fatti = elettori.filter(g => g.votato).length;
+    sezione("s-gioco", "voto" + JSON.stringify([t, v.mioVoto, fatti, elettori.length]), () => `
+      ${testa}
+      <div class="domanda big">${sonoAutore ? "Queste sono le tue frasi: non tradirti!" : `Qual è la bugia di <b>${esc(t.nome)}</b>?`}</div>
+      ${t.frasi.map((f, i) => `
+        <button class="frase${v.mioVoto === i ? " scelta" : ""}" data-act="voto" data-i="${i}" ${sonoAutore ? "disabled" : ""}>
+          <span class="lettera">${LETTERE[i]}</span><span class="testo">${esc(f)}</span>
+        </button>`).join("")}
+      <p class="small muted">${sonoAutore ? "" : v.mioVoto == null ? "Tocca la frase che secondo te è falsa." : "Puoi cambiare idea finché la bugia non viene svelata. "}
+        Hanno votato ${fatti} su ${elettori.length}.</p>`);
+    return;
+  }
+
+  // svela
+  const s = v.svela;
+  const nomi = id => v.giocatori.find(g => g.id === id)?.nome ?? "?";
+  const perFrase = [0, 1, 2].map(i => Object.entries(s.voti).filter(([, x]) => x === i).map(([id]) => nomi(id)));
+  const ingannati = Object.values(s.voti).filter(x => x !== s.bugia).length;
+  let esito = "";
+  if (sonoAutore) esito = ingannati ? `<div class="esito si">Hai ingannato ${ingannati === 1 ? "1 persona" : ingannati + " persone"}: +${ingannati}</div>`
+                                    : `<div class="esito no">Non hai ingannato nessuno!</div>`;
+  else if (v.mioVoto == null) esito = `<div class="esito no">Non hai votato</div>`;
+  else if (v.mioVoto === s.bugia) esito = `<div class="esito si">Hai scovato la bugia! +1</div>`;
+  else esito = `<div class="esito no">Ti ha ingannato! +1 a ${esc(t.nome)}</div>`;
+  sezione("s-gioco", "svela" + JSON.stringify([t, s, v.mioVoto]), () => `
+    ${testa}
+    <div class="domanda big">Le frasi di <b>${esc(t.nome)}</b></div>
+    ${esito}
+    ${t.frasi.map((f, i) => `
+      <div class="frase ${i === s.bugia ? "bugia" : "vera"}">
+        <span class="lettera">${LETTERE[i]}</span>
+        <span class="testo"><span class="verdetto">${i === s.bugia ? "BUGIA" : "VERA"}</span><br>${esc(f)}
+          ${perFrase[i].length ? `<div class="votanti">Votata da: ${perFrase[i].map(esc).join(", ")}</div>` : ""}</span>
+      </div>`).join("")}`);
+}
+
+function renderFrasi() {
+  const v = vista;
+  const io = v.giocatori.find(g => g.id === v.io);
+  const puoScrivere = v.fase === "lobby" || (v.fase !== "fine" && io && !io.inGioco);
+  if (!puoScrivere) return sezione("s-frasi", "no", "");
+  if (mieFrasi && !modifica) {
+    return sezione("s-frasi", "mie" + JSON.stringify(mieFrasi) + v.fase, () => `
+      <h2>Le tue frasi sono pronte ✓</h2>
+      <div class="card">
+        <ul class="mie">
+          <li>✅ ${esc(mieFrasi[0])}</li><li>✅ ${esc(mieFrasi[1])}</li><li>❌ ${esc(mieFrasi[2])}</li>
+        </ul>
+        ${v.fase === "lobby" ? `<button class="link" data-act="modifica" style="padding-left:0">Modifica</button>` : `<p class="small muted" style="margin-top:8px">Giocherai alla fine, dopo gli altri.</p>`}
+      </div>`);
+  }
+  const form = () => `
+    <div class="card">
+      <p class="small muted">Nessuno vedrà le tue frasi finché non arriva il tuo turno, e verranno mostrate in ordine casuale.</p>
+      <label for="f0">✅ Una cosa vera su di te</label>
+      <input type="text" id="f0" data-bozza="0" maxlength="${MAX_FRASE}" value="${esc(bozza[0])}" placeholder="Per esempio: ho tre gatti">
+      <label for="f1">✅ Un'altra cosa vera</label>
+      <input type="text" id="f1" data-bozza="1" maxlength="${MAX_FRASE}" value="${esc(bozza[1])}" placeholder="Per esempio: sono stato in Islanda">
+      <label for="f2">❌ Una bugia (che sembri vera!)</label>
+      <input type="text" id="f2" data-bozza="2" maxlength="${MAX_FRASE}" value="${esc(bozza[2])}" placeholder="Per esempio: so suonare la tromba">
+      <button class="btn verde" data-act="frasi">${modifica ? "Salva" : "Fatto"}</button>
+      ${modifica ? `<button class="link" data-act="annulla" style="padding-left:0;margin-top:6px">Annulla</button>` : ""}
+    </div>`;
+  if (v.fase === "lobby") return sezione("s-frasi", "form" + modifica, () => `<h2>Le tue frasi</h2>${form()}`);
+  sezione("s-frasi", "tardi", () => `<details style="margin-top:20px"><summary>Vuoi giocare anche tu? Scrivi le tue frasi</summary>${form()}</details>`);
+}
+
+function renderLista() {
+  const v = vista;
+  if (v.fase === "fine") return sezione("s-lista", "no", "");
+  const ordinati = v.fase === "lobby" ? v.giocatori : v.giocatori.slice().sort((a, b) => b.punti - a.punti);
+  const autore = v.turno?.autore;
+  const puoRimuovere = ruolo === "host" && v.fase === "lobby";
+  const righe = ordinati.map(g => {
+    let stato;
+    if (v.fase === "lobby") stato = g.pronto ? `<span class="stato ok">pronto ✓</span>` : `<span class="stato">sta scrivendo…</span>`;
+    else if (v.fase === "voto") stato = g.id === autore ? `<span class="stato">è il suo turno</span>` : g.votato ? `<span class="stato ok">ha votato ✓</span>` : `<span class="stato">…</span>`;
+    else stato = "";
+    return `<li class="${g.online ? "" : "off"}">
+      <span class="nome">${esc(g.nome)}${g.id === v.io ? " (tu)" : ""}${g.id === v.host ? " 👑" : ""}${g.online ? "" : " · non collegato"}</span>
+      ${stato}
+      ${v.fase !== "lobby" ? `<span class="punti">${g.punti}</span>` : ""}
+      ${puoRimuovere && !g.online ? `<button class="x" data-act="rimuovi" data-id="${esc(g.id)}" aria-label="Togli ${esc(g.nome)}">✕</button>` : ""}
+    </li>`;
+  }).join("");
+  sezione("s-lista", "lista" + ruolo + JSON.stringify([v.fase, autore, ordinati]), `
+    <h2>${v.fase === "lobby" ? `Giocatori (${v.giocatori.length})` : "Punti"}</h2>
+    <div class="card"><ul class="giocatori">${righe}</ul></div>`);
+}
+
+function renderAzioni() {
+  const v = vista;
+  if (ruolo !== "host") {
+    const testo = v.fase === "svela" ? "Aspetta che il capo partita passi al prossimo turno."
+                : v.fase === "fine" ? "Grazie per aver giocato!" : "";
+    return sezione("s-azioni", "o" + testo, testo ? `<p class="small muted" style="text-align:center;margin-top:16px">${testo}</p>` : "");
+  }
+  let html = "";
+  if (v.fase === "lobby") {
+    const pronti = v.giocatori.filter(g => g.pronto).length;
+    const mancano = v.giocatori.filter(g => !g.pronto).map(g => g.nome);
+    html = `<button class="btn" data-act="inizia" ${pronti < 2 ? "disabled" : ""}>Inizia la partita</button>
+      <p class="small muted" style="margin-top:8px">${pronti < 2 ? "Servono almeno 2 giocatori con le frasi pronte."
+        : mancano.length ? `Senza frasi (potranno solo votare, o aggiungerle dopo): ${mancano.map(esc).join(", ")}.` : "Tutti pronti!"}</p>`;
+  } else if (v.fase === "voto") {
+    html = `<button class="btn" data-act="svela">Svela la bugia</button>`;
+  } else if (v.fase === "svela") {
+    const ultimo = v.turno.n >= v.turno.tot;
+    html = `<button class="btn" data-act="avanti">${ultimo ? "Classifica finale" : "Prossimo turno"}</button>`;
+  } else {
+    html = `<button class="btn" data-act="ancora">Gioca ancora</button>
+      <p class="small muted" style="margin-top:8px">Stessi giocatori, frasi nuove.</p>`;
+  }
+  sezione("s-azioni", "h" + html, html);
+}
+
+// ------------------------------ Avvio ---------------------------------------
+(function avvio() {
+  if (typeof Peer === "undefined") {
+    document.querySelector("main").innerHTML = `<div class="card">Non riesco a caricare il gioco: controlla la connessione a internet e ricarica la pagina.</div>`;
+    return;
+  }
+  const r = leggi("bugia-ruolo", sessionStorage);   // ricaricamento della stessa scheda
+  const p = (new URLSearchParams(location.search).get("p") || "").toUpperCase();
+  if (r?.ruolo === "host" && leggi("bugia-host")?.codice === r.codice && mioNome) return avviaHost(leggi("bugia-host"));
+  if (r?.ruolo === "ospite" && r.codice === p && mioNome) return avviaOspite(p);
+  render();
+})();
+</script>
+</body>
+</html>
