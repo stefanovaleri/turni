@@ -124,16 +124,22 @@
   <noscript>Per giocare serve JavaScript.</noscript>
 </main>
 
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.10.1/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
-// Rete peer-to-peer: il telefono di chi crea la partita ("capo partita") tiene
-// tutto lo stato; gli altri si collegano a lui con PeerJS e ricevono una vista
-// che non contiene le frasi degli altri né i voti finché non si svela.
+// Rete: tutti i telefoni si collegano a un broker MQTT pubblico tramite
+// WebSocket cifrato, che passa da qualsiasi rete (anche i dati mobili). Il
+// telefono di chi crea la partita ("capo partita") tiene tutto lo stato; gli
+// altri gli mandano le loro azioni e ricevono ciascuno una vista che non
+// contiene le frasi degli altri né i voti finché non si svela.
+//   <base>/host     messaggio conservato dal broker: il capo partita c'è (vuoto = non c'è)
+//   <base>/h        dagli ospiti al capo partita
+//   <base>/c/<id>   dal capo partita a un ospite
 // ---------------------------------------------------------------------------
-const PREFISSO = "agesci-turni-bugia-";
+const BROKER = "wss://broker.emqx.io:8084/mqtt";
+const RADICE = "agesci-turni/bugia/v1/";
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const MAX_FRASE = 140, MAX_NOME = 20;
 const LETTERE = ["A", "B", "C"];
@@ -152,7 +158,7 @@ let mioNome = leggi("bugia-nome") || "";
 
 let ruolo = null;          // null (schermata iniziale) | "host" | "ospite"
 let codice = null;
-let peer = null;
+let client = null;        // collegamento MQTT
 let rete = "attesa";       // "ok" | "attesa" | "persa" | "assente"
 let vista = null;          // ultima vista ricevuta (o calcolata, per l'host)
 let mieFrasi = null;       // le mie frasi già inviate [vera, vera, bugia]
@@ -162,11 +168,11 @@ let bozzaHome = { nome: mioNome, codice: "" };
 
 // ------------------------------- Host ---------------------------------------
 let S = null;              // stato completo della partita (solo sull'host)
-const conns = new Map();   // DataConnection -> id giocatore
+const presenti = new Set(); // id degli ospiti collegati
 let timerSvela = null, wakeLock = null;
 
 function online() {
-  const s = new Set(conns.values());
+  const s = new Set(presenti);
   s.add(mioId);
   return s;
 }
@@ -196,9 +202,7 @@ function vistaPer(id) {
 
 function trasmetti() {
   salvaHost();
-  for (const [c, id] of conns) {
-    if (c.open) { try { c.send({ t: "stato", s: vistaPer(id), mie: S.giocatori[id]?.frasi ?? null }); } catch {} }
-  }
+  for (const id of presenti) pubblica(T("c/" + id), { t: "stato", s: vistaPer(id), mie: S.giocatori[id]?.frasi ?? null });
   vista = vistaPer(mioId);
   mieFrasi = S.giocatori[mioId]?.frasi ?? null;
   render();
@@ -290,52 +294,42 @@ function azione(id, m) {
   return false;
 }
 
-function daOspite(c, m) {
+function daOspite(m) {
   if (!m || typeof m !== "object") return;
+  const id = pulisci(m.from, 64);
+  if (!id || id === mioId) return;
   if (m.t === "ciao") {
-    const id = pulisci(m.id, 64), nome = pulisci(m.nome, MAX_NOME);
-    if (!id || !nome || id === mioId) { try { c.close(); } catch {} return; }
-    for (const [altra, gid] of conns) if (gid === id && altra !== c) { conns.delete(altra); try { altra.close(); } catch {} }
-    conns.set(c, id);
+    const nome = pulisci(m.nome, MAX_NOME);
+    if (!nome) return;
+    presenti.add(id);
     if (S.giocatori[id]) S.giocatori[id].nome = nome;
     else S.giocatori[id] = { nome, frasi: null, punti: 0 };
     if (S.fase === "voto") controllaVoti();
     trasmetti();
     return;
   }
-  const id = conns.get(c);
-  if (id && azione(id, m)) trasmetti();
+  if (m.t === "via") {
+    if (presenti.delete(id)) { if (S.fase === "voto") controllaVoti(); trasmetti(); }
+    return;
+  }
+  if (!S.giocatori[id]) return;
+  const nuovo = !presenti.has(id);
+  presenti.add(id);
+  if (azione(id, m) || nuovo) trasmetti();
 }
 
 function apriHost() {
   rete = "attesa";
-  peer = new Peer(PREFISSO + codice);
-  peer.on("open", () => { rete = "ok"; render(); });
-  peer.on("connection", c => {
-    c.on("data", m => daOspite(c, m));
-    const chiudi = () => {
-      if (!conns.has(c)) return;
-      conns.delete(c);
-      if (S.fase === "voto") controllaVoti();
-      trasmetti();
-    };
-    c.on("close", chiudi);
-    c.on("error", chiudi);
-  });
-  peer.on("disconnected", () => {
-    rete = "persa"; render();
-    setTimeout(() => { if (peer && !peer.destroyed && peer.disconnected) peer.reconnect(); }, 1500);
-  });
-  peer.on("error", e => {
-    if (e.type === "unavailable-id") {
-      // Il server ricorda ancora il vecchio collegamento (es. dopo un ricaricamento): riprovo.
-      peer.destroy(); rete = "attesa"; render();
-      setTimeout(apriHost, 3000);
-    } else if (["network", "server-error", "socket-error", "socket-closed"].includes(e.type)) {
-      rete = "persa"; render();
-      setTimeout(() => { if (peer && !peer.destroyed && peer.disconnected) peer.reconnect(); }, 3000);
-    }
-  });
+  collega({ will: { topic: T("host"), payload: "", retain: true, qos: 1 } },
+    () => {
+      presenti.clear();   // gli ospiti si ripresentano quando ricevono "vivo"
+      client.subscribe(T("h"), { qos: 1 }, () => {
+        rete = "ok";
+        pubblica(T("host"), { t: "vivo", nome: mioNome }, { retain: true });
+        trasmetti();
+      });
+    },
+    (topic, m) => { if (topic === T("h")) daOspite(m); });
 }
 
 function avviaHost(salvato) {
@@ -358,77 +352,76 @@ async function tieniAcceso() {
   try { if ("wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } } catch {}
 }
 
+// ------------------------------ Rete ----------------------------------------
+const T = sotto => RADICE + codice + "/" + sotto;
+
+function pubblica(topic, obj, opz = {}) {
+  if (client && client.connected) client.publish(topic, obj == null ? "" : JSON.stringify(obj), { qos: 1, ...opz });
+}
+
+function collega(opzioni, suConnessione, suMessaggio) {
+  client = mqtt.connect(BROKER, {
+    keepalive: 20, reconnectPeriod: 2000, connectTimeout: 10000, clean: true,
+    clientId: "bugia_" + Math.random().toString(36).slice(2, 12), ...opzioni,
+  });
+  client.on("connect", () => { suConnessione(); render(); });
+  const persa = () => { if (rete !== "persa") { rete = "persa"; render(); } };
+  client.on("offline", persa);
+  client.on("close", persa);
+  client.on("message", (topic, payload) => {
+    const s = payload.toString();
+    let m = null;
+    if (s) { try { m = JSON.parse(s); } catch { return; } }
+    suMessaggio(topic, m);
+  });
+}
+
 // ------------------------------ Ospite --------------------------------------
-let conn = null, timerRiprova = null;
-
-function riprova(ms) {
-  clearTimeout(timerRiprova);
-  timerRiprova = setTimeout(connetti, ms);
-}
-
-function connetti() {
-  clearTimeout(timerRiprova);
-  if (ruolo !== "ospite" || !peer || peer.destroyed) return;
-  if (conn && conn.open) return;
-  if (peer.disconnected) { peer.reconnect(); riprova(4000); return; }
-  if (!peer.open) { riprova(1000); return; }
-  if (conn) { try { conn.close(); } catch {} }
-  const c = peer.connect(PREFISSO + codice, { reliable: true });
-  conn = c;
-  riprova(8000);   // se non si apre entro 8 s, ritento
-  c.on("open", () => {
-    if (conn !== c) return;
-    clearTimeout(timerRiprova);
-    rete = "ok";
-    c.send({ t: "ciao", id: mioId, nome: mioNome });
-    render();
-  });
-  c.on("data", m => {
-    if (conn !== c || !m || m.t !== "stato") return;
-    vista = m.s; mieFrasi = m.mie;
-    if (mieFrasi && !modifica) bozza = mieFrasi.slice();
-    render();
-  });
-  const persa = () => {
-    if (conn !== c) return;
-    conn = null;
-    if (rete === "ok") rete = "persa";
-    render();
-    riprova(1500);
-  };
-  c.on("close", persa);
-  c.on("error", persa);
-}
+let timerAssente = null;
+const ciao = () => pubblica(T("h"), { t: "ciao", from: mioId, nome: mioNome });
 
 function avviaOspite(cod) {
   ruolo = "ospite"; codice = cod; rete = "attesa";
   scrivi("bugia-ruolo", { ruolo, codice }, sessionStorage);
   history.replaceState(null, "", location.pathname + "?p=" + codice);
-  peer = new Peer();
-  peer.on("open", () => connetti());
-  peer.on("disconnected", () => setTimeout(() => { if (peer && !peer.destroyed && peer.disconnected) peer.reconnect(); }, 1500));
-  peer.on("error", e => {
-    if (e.type === "peer-unavailable") { rete = "assente"; conn = null; render(); riprova(3000); }
-    else if (["network", "server-error", "socket-error", "socket-closed"].includes(e.type)) { rete = "persa"; render(); riprova(3000); }
-  });
+  collega({ will: { topic: T("h"), payload: JSON.stringify({ t: "via", from: mioId }), qos: 1 } },
+    () => {
+      rete = "attesa";
+      client.subscribe([T("c/" + mioId), T("host")], { qos: 1 });
+      clearTimeout(timerAssente);
+      timerAssente = setTimeout(() => { if (rete === "attesa") { rete = "assente"; render(); } }, 5000);
+    },
+    (topic, m) => {
+      if (topic === T("host")) {
+        // Il capo partita c'è (anche appena tornato): mi ripresento.
+        if (m && m.t === "vivo") { rete = "ok"; ciao(); }
+        else rete = "assente";
+        render();
+      } else if (m && m.t === "stato") {
+        rete = "ok";
+        vista = m.s; mieFrasi = m.mie;
+        if (mieFrasi && !modifica) bozza = mieFrasi.slice();
+        render();
+      }
+    });
   render();
 }
 
 // ------------------------------ Comandi -------------------------------------
 function invia(m) {
   if (ruolo === "host") { if (azione(mioId, m)) trasmetti(); }
-  else if (conn && conn.open) conn.send(m);
+  else if (client && client.connected && rete === "ok") pubblica(T("h"), { ...m, from: mioId });
   else alert("Non sei collegato alla partita: aspetta qualche secondo e riprova.");
 }
 
 function esci() {
   if (ruolo === "host" && !confirm("Chiudere la partita? Gli altri verranno scollegati.")) return;
-  if (ruolo === "host") scrivi("bugia-host", null);
+  if (ruolo === "host") { scrivi("bugia-host", null); pubblica(T("host"), null, { retain: true }); }
+  else pubblica(T("h"), { t: "via", from: mioId });
   scrivi("bugia-ruolo", null, sessionStorage);
-  try { peer?.destroy(); } catch {}
-  location.href = location.pathname;
+  const vai = () => { location.href = location.pathname; };
+  if (client) { client.end(false, {}, vai); setTimeout(vai, 1500); } else vai();
 }
-
 function linkInvito() { return location.origin + location.pathname + "?p=" + codice; }
 
 document.addEventListener("input", e => {
@@ -474,11 +467,8 @@ document.addEventListener("click", e => {
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
-  if (ruolo === "ospite" && !(conn && conn.open)) connetti();
-  if (ruolo === "host") {
-    tieniAcceso();
-    if (peer && !peer.destroyed && peer.disconnected) peer.reconnect();
-  }
+  if (ruolo === "host") tieniAcceso();
+  if (client && !client.connected && !client.disconnecting) client.reconnect();
 });
 
 // ------------------------------ Disegno -------------------------------------
@@ -711,7 +701,7 @@ function renderAzioni() {
 
 // ------------------------------ Avvio ---------------------------------------
 (function avvio() {
-  if (typeof Peer === "undefined") {
+  if (typeof mqtt === "undefined") {
     document.querySelector("main").innerHTML = `<div class="card">Non riesco a caricare il gioco: controlla la connessione a internet e ricarica la pagina.</div>`;
     return;
   }
