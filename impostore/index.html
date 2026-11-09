@@ -155,10 +155,8 @@
   .domanda b { font-weight: 400; color: var(--evid); }
   .coppia { display: flex; gap: 12px; margin: 6px 0 12px; }
   .coppia .card { flex: 1; text-align: center; margin: 0; padding: 10px 8px 12px; background: #fdfcf7; transform: rotate(-1.5deg); }
-  .coppia .card + .card { transform: rotate(1.8deg); }
   .coppia .emoji { font-size: 58px; line-height: 1.2; display: block; background: #e9e4d6; margin: 6px 0 8px; }
   .coppia .nome-img { font-family: var(--macchina); }
-  .coppia .imp { outline: 3px solid var(--timbro); }
 </style>
 </head>
 <body>
@@ -191,8 +189,8 @@ const BROKER = ["wss://broker.hivemq.com:8884/mqtt", "wss://broker.emqx.io:8084/
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const MAX_NOME = 20, MAX_PAROLA = 24, MIN_GIOCATORI = 3;
 
-// Coppie di immagini simili: una va alla ciurma, l'altra all'impostore (a caso).
-const COPPIE = [
+// Le immagini segrete (scritte a coppie per tema, ma ognuna vale da sola).
+const IMMAGINI = [
   [["🏕️", "Tenda"], ["🛖", "Capanna"]],
   [["🎒", "Zaino"], ["🧳", "Valigia"]],
   [["🧭", "Bussola"], ["⌚", "Orologio"]],
@@ -223,7 +221,7 @@ const COPPIE = [
   [["🎸", "Chitarra"], ["🎻", "Violino"]],
   [["🏰", "Castello"], ["⛪", "Chiesa"]],
   [["🧤", "Guanti"], ["🧦", "Calzini"]],
-];
+].flat().map(([emoji, nome]) => ({ emoji, nome }));
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -234,7 +232,6 @@ const caso = n => Math.floor(Math.random() * n);
 const nuovoCodice = () => Array.from({ length: 4 }, () => ALFABETO[caso(ALFABETO.length)]).join("");
 const pulisci = (s, max) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 const normale = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
-const immagine = ([emoji, nome]) => ({ emoji, nome });
 
 let mioId = leggi("impostore-id");
 if (!mioId) { mioId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)); scrivi("impostore-id", mioId); }
@@ -263,8 +260,7 @@ function salvaHost() { S.t = Date.now(); scrivi("impostore-host", S); }
 const diTurno = () => S.fase === "indizi" ? S.ordine[S.turno] : null;
 function immagineDi(id) {
   if (!S.ordine.includes(id)) return null;
-  const c = COPPIE[S.coppia];
-  return immagine(c[id === S.imp ? 1 - S.lato : S.lato]);
+  return id === S.imp ? { imp: true } : IMMAGINI[S.img];   // l'impostore non ha l'immagine
 }
 
 function vistaPer(id) {
@@ -280,8 +276,7 @@ function vistaPer(id) {
     mioVoto: S.voti[id] ?? null, svela: null,
   };
   if (S.fase === "svela") {
-    const c = COPPIE[S.coppia];
-    v.svela = { imp: S.imp, ciurma: immagine(c[S.lato]), impostore: immagine(c[1 - S.lato]), voti: S.voti, preso: S.preso, guadagni: S.guadagni };
+    v.svela = { imp: S.imp, ciurma: IMMAGINI[S.img], voti: S.voti, preso: S.preso, guadagni: S.guadagni };
   }
   return v;
 }
@@ -296,13 +291,16 @@ function trasmetti() {
 function nuovoRound() {
   const presenti = [...online()].filter(id => S.giocatori[id]);
   if (presenti.length < MIN_GIOCATORI) return false;
-  let libere = COPPIE.map((_, i) => i).filter(i => !S.usate.includes(i));
-  if (!libere.length) { S.usate = []; libere = COPPIE.map((_, i) => i); }
-  S.coppia = libere[caso(libere.length)];
-  S.usate.push(S.coppia);
-  S.lato = caso(2);
+  let libere = IMMAGINI.map((_, i) => i).filter(i => !S.usate.includes(i));
+  if (!libere.length) { S.usate = []; libere = IMMAGINI.map((_, i) => i); }
+  S.img = libere[caso(libere.length)];
+  S.usate.push(S.img);
   S.ordine = mescola(presenti);
   S.imp = S.ordine[caso(S.ordine.length)];
+  if (S.ordine[0] === S.imp) {   // l'impostore non parla mai per primo
+    const j = 1 + caso(S.ordine.length - 1);
+    [S.ordine[0], S.ordine[j]] = [S.ordine[j], S.ordine[0]];
+  }
   S.turno = 0; S.indizi = []; S.voti = {}; S.preso = null; S.guadagni = {};
   S.round++;
   S.fase = "indizi";
@@ -349,6 +347,8 @@ function azione(id, m) {
       if (id !== diTurno()) return false;
       const p = pulisci(m.p, MAX_PAROLA);
       if (!p) return false;
+      // Niente parole già dette (non si controlla il nome dell'immagine: rifiutarlo all'impostore gliela svelerebbe).
+      if (S.indizi.some(x => normale(x.p) === normale(p))) return false;
       S.indizi.push({ id, p });
       prossimoIndizio();
       return true;
@@ -477,7 +477,7 @@ function avviaHost(salvato) {
   if (salvato) { S = salvato; codice = S.codice; }
   else {
     codice = nuovoCodice();
-    S = { codice, fase: "lobby", giocatori: {}, round: 0, usate: [], coppia: 0, lato: 0, imp: null,
+    S = { codice, fase: "lobby", giocatori: {}, round: 0, usate: [], img: 0, imp: null,
           ordine: [], turno: 0, indizi: [], voti: {}, preso: null, guadagni: {} };
   }
   S.giocatori[mioId] ??= { nome: mioNome, punti: 0 };
@@ -549,7 +549,8 @@ function mandaParola() {
   const p = pulisci(bozzaParola, MAX_PAROLA);
   if (!p) { alert("Scrivi il tuo indizio."); return; }
   if (p.includes(" ")) { alert("Una parola sola, senza spazi!"); return; }
-  if (vista?.mia && normale(p) === normale(vista.mia.nome)) { alert("Non puoi dire proprio il nome dell'immagine!"); return; }
+  if (vista?.indizi?.some(x => normale(x.p) === normale(p))) { alert("Questa parola l'ha già detta qualcun altro: trovane un'altra!"); return; }
+  if (vista?.mia?.nome && normale(p) === normale(vista.mia.nome)) { alert("Non puoi dire proprio il nome dell'immagine!"); return; }
   bozzaParola = "";
   invia({ t: "indizio", p });
 }
@@ -651,8 +652,8 @@ function renderHome() {
   sezione("s-gioco", "home" + !!p + !!recente, () => `
     <div class="card">
       <ol class="regole">
-        <li>Ognuno vede sul telefono un'immagine segreta. È la stessa per tutti… <b>tranne uno, l'impostore</b>, che ne vede una simile ma diversa. E non sa di essere lui!</li>
-        <li>A turno, ognuno scrive <b>una sola parola</b> sull'immagine: abbastanza per far capire che l'ha vista, ma non così chiara da svelarla all'impostore.</li>
+        <li>Ognuno vede sul telefono la stessa immagine segreta… <b>tranne uno, l'impostore</b>, che non la vede: sa solo di essere l'impostore e deve bluffare.</li>
+        <li>A turno, ognuno scrive <b>una sola parola</b> sull'immagine, diversa da quelle già dette: abbastanza per far capire che l'ha vista, ma non così chiara da svelarla all'impostore. L'impostore non è mai il primo.</li>
         <li>Poi si discute e si vota: <b>chi è l'impostore?</b></li>
       </ol>
       <p class="small muted">Chi vota l'impostore prende 1 punto. Se l'impostore non è il più votato, prende 2 punti.</p>
@@ -681,15 +682,20 @@ function renderCarta() {
   const v = vista;
   if (!v.mia) return sezione("s-carta", "no", "");
   const aperta = scoperta === v.round;
-  sezione("s-carta", "carta" + v.round + aperta + v.mia.nome, aperta ? `
+  sezione("s-carta", "carta" + v.round + aperta + JSON.stringify(v.mia), aperta ? (v.mia.imp ? `
+    <button class="carta polaroid" data-act="carta" aria-label="Copri la carta">
+      <span class="foto"><span class="timbro" style="font-size:2rem;margin:34px 0">Impostore</span></span>
+      <span class="nome-img">Sei l'impostore!</span>
+      <div class="nota">Non hai l'immagine: ascolta gli indizi degli altri e bluffa. Tocca per coprire.</div>
+    </button>` : `
     <button class="carta polaroid" data-act="carta" aria-label="Copri l'immagine">
       <span class="foto"><span class="emoji">${v.mia.emoji}</span></span>
       <span class="nome-img">${esc(v.mia.nome)}</span>
       <div class="nota">Tocca per coprirla</div>
-    </button>` : `
-    <button class="carta coperta" data-act="carta" aria-label="Guarda l'immagine">
+    </button>`) : `
+    <button class="carta coperta" data-act="carta" aria-label="Guarda la tua carta">
       <span class="timbro">Top secret</span>
-      <span class="nome-img">La tua immagine</span>
+      <span class="nome-img">La tua carta</span>
       <div class="nota">Tocca per guardarla, senza farla vedere agli altri</div>
     </button>`);
 }
@@ -759,7 +765,7 @@ function renderGioco() {
         <label for="parola" style="margin-top:0">Il tuo indizio: una parola sola</label>
         <input type="text" id="parola" maxlength="${MAX_PAROLA}" autocomplete="off" autocapitalize="none" spellcheck="false" value="${esc(bozzaParola)}" placeholder="Una parola">
         <button class="btn verde" data-act="parola">Invia</button>
-        <p class="small muted" style="margin-top:8px">Fai capire che hai visto l'immagine, ma senza svelarla a chi non l'ha vista.</p>
+        <p class="small muted" style="margin-top:8px">${v.mia?.imp ? "Bluffa: scegli una parola che stia bene con gli indizi degli altri." : "Fai capire che hai visto l'immagine, ma senza svelarla all'impostore."}</p>
       </div>` : ""}
       <div class="card">${listaIndizi(v)}</div>`);
     if (mio) setTimeout(() => { const i = $("#parola"); if (i && document.activeElement !== i && !bozzaParola) i.focus({ preventScroll: true }); }, 0);
@@ -801,9 +807,8 @@ function renderGioco() {
     ${testa}
     <div class="domanda big">L'impostore era <b>${esc(nomeDi(s.imp))}</b>${tu(s.imp)}</div>
     ${esito}
-    <div class="coppia">
-      <div class="card"><div class="label" style="color:var(--verde)">Ciurma</div><span class="emoji">${s.ciurma.emoji}</span><span class="nome-img">${esc(s.ciurma.nome)}</span></div>
-      <div class="card imp"><div class="label">Impostore</div><span class="emoji">${s.impostore.emoji}</span><span class="nome-img">${esc(s.impostore.nome)}</span></div>
+    <div class="coppia" style="justify-content:center">
+      <div class="card" style="flex:0 1 60%"><div class="label" style="color:var(--verde)">L'immagine era</div><span class="emoji">${s.ciurma.emoji}</span><span class="nome-img">${esc(s.ciurma.nome)}</span></div>
     </div>
     <h2>Voti</h2>
     ${perVoti.map(id => {
