@@ -53,11 +53,11 @@
   .small { font-size: .9rem; }
 
   label { display: block; font-weight: 700; margin: 14px 0 6px; }
-  input[type=text] {
-    width: 100%; padding: 12px 14px; font: inherit; font-size: 1.05rem; color: var(--ink);
+  input[type=text], textarea {
+    width: 100%; resize: none; padding: 12px 14px; font: inherit; font-size: 1.05rem; color: var(--ink);
     background: var(--bianco); border: var(--bordo); border-radius: 12px;
   }
-  input[type=text]:focus { outline: none; box-shadow: 0 0 0 4px var(--giallo); }
+  input[type=text]:focus, textarea:focus { outline: none; box-shadow: 0 0 0 4px var(--giallo); }
   input.codice { text-transform: uppercase; letter-spacing: .3em; font-weight: 800; font-size: 1.4rem; text-align: center; }
   button { font: inherit; cursor: pointer; }
   .btn {
@@ -129,6 +129,25 @@
   .mie { margin: 0; padding-left: 0; list-style: none; font-weight: 600; }
   .mie li { padding: 4px 0; }
   details summary { cursor: pointer; font-weight: 800; font-size: 1.05rem; }
+  details.card summary { color: var(--ink); }
+
+  .argomenti { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .arg {
+    display: flex; align-items: center; gap: 8px; text-align: left; padding: 10px 12px; min-height: 58px;
+    background: var(--carta); color: var(--ink); border: var(--bordo); border-radius: 14px; box-shadow: 3px 3px 0 var(--ink);
+    font-family: Fredoka, Nunito, sans-serif; font-weight: 500; font-size: 1rem; line-height: 1.15;
+  }
+  .arg:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .arg .emoji { font-size: 1.5rem; flex: none; }
+  .arg.usato { background: rgba(255,255,255,.12); color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.35); box-shadow: none; text-decoration: line-through; cursor: default; }
+  .arg.usato .emoji { opacity: .6; }
+  .tema {
+    text-align: center; background: var(--carta); color: var(--ink); border: var(--bordo); border-radius: 22px;
+    box-shadow: 6px 6px 0 var(--ink); padding: 18px 16px 12px; margin: 4px 0 8px; animation: salta .45s ease-out both;
+  }
+  .tema-emoji { font-size: 4rem; line-height: 1.1; margin-top: 8px; }
+  .tema .big { font-size: 2rem; font-weight: 700; color: var(--sfondo); line-height: 1.1; margin: 4px 0 8px; }
+  .etichette { display: flex; flex-wrap: wrap; gap: 8px; }
 
   @keyframes scuoti { 0%,100% { transform: none; } 20%,60% { transform: translateX(-6px) rotate(-1deg); } 40%,80% { transform: translateX(6px) rotate(1deg); } }
   @keyframes timbro { from { transform: rotate(-5deg) scale(2.2); opacity: 0; } to { transform: rotate(-5deg) scale(1); opacity: 1; } }
@@ -166,6 +185,21 @@ const RADICE = "agesci-turni/bugia/v1/";
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const MAX_FRASE = 140, MAX_NOME = 20;
 const LETTERE = ["A", "B", "C"];
+// Argomenti delle manche, con tre esempi che compaiono come suggerimento nei campi.
+const ARGOMENTI = [
+  { e: "🍕", n: "Cibo", es: ["non ho mai mangiato il sushi", "adoro i cavoletti di Bruxelles", "una volta ho mangiato una cavalletta"] },
+  { e: "✈️", n: "Viaggi", es: ["ho visitato l'Islanda", "non ho mai preso l'aereo", "ho dormito in un faro"] },
+  { e: "🧸", n: "Quando ero piccolo", es: ["avevo paura dei palloncini", "ho imparato a nuotare a tre anni", "ho fatto il bagno in una fontana"] },
+  { e: "🏫", n: "Scuola", es: ["ho preso una nota il primo giorno", "la mia materia preferita è matematica", "ho cambiato scuola tre volte"] },
+  { e: "⚽", n: "Sport e giochi", es: ["so andare sul monociclo", "ho vinto un torneo di scacchi", "non so andare in bicicletta"] },
+  { e: "🐾", n: "Animali", es: ["ho una tartaruga di vent'anni", "mi ha morso un'oca", "ho dato da mangiare a un cammello"] },
+  { e: "🏠", n: "Famiglia e casa", es: ["ho quattro cugini", "dormo in un letto a castello", "mio nonno faceva il pompiere"] },
+  { e: "⚜️", n: "Avventure scout", es: ["al campo ho dormito sotto la pioggia", "accendo il fuoco con un solo fiammifero", "in uscita ho perso lo zaino"] },
+  { e: "🙈", n: "Figuracce", es: ["ho salutato uno sconosciuto credendo fosse mio zio", "ho sbagliato bagno al ristorante", "mi sono addormentato al cinema"] },
+  { e: "🎬", n: "Film, musica e libri", es: ["ho visto lo stesso film dieci volte", "suono la chitarra", "ho letto un libro di 500 pagine in un weekend"] },
+  { e: "🌟", n: "Talenti nascosti", es: ["so fare il verso della gallina", "scrivo anche con la mano sinistra", "so risolvere il cubo di Rubik"] },
+  { e: "🦁", n: "Coraggio e paure", es: ["ho paura del buio", "ho fatto bungee jumping", "ho preso in mano un serpente"] },
+];
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -214,6 +248,7 @@ function vistaPer(id) {
       votato: S.fase === "voto" && gid in S.voti, inGioco: S.ordine.includes(gid),
     })),
     turno: null, mioVoto: S.voti[id] ?? null, svela: null,
+    manche: S.manche ?? 0, argomento: S.argomento ?? null, usati: S.usati ?? [],
   };
   if (autore) {
     const g = S.giocatori[autore];
@@ -235,7 +270,7 @@ function avantiTurno() {
   S.turno++;
   while (S.turno < S.ordine.length && !S.giocatori[S.ordine[S.turno]]) S.turno++;
   S.voti = {};
-  if (S.turno >= S.ordine.length) { S.fase = "fine"; S.ordine_frasi = null; return; }
+  if (S.turno >= S.ordine.length) { S.fase = "lobby"; S.ordine_frasi = null; return; }   // fine della manche
   S.fase = "voto";
   S.ordine_frasi = mescola([0, 1, 2]);   // 2 = la bugia
 }
@@ -268,12 +303,12 @@ function azione(id, m) {
   const capo = id === mioId;
   switch (m.t) {
     case "frasi": {
-      if (S.fase === "fine") return false;
-      if (S.fase !== "lobby" && S.ordine.includes(id)) return false;   // il suo turno è già in calendario
+      if (!["scrittura", "voto", "svela"].includes(S.fase)) return false;
+      if (S.fase !== "scrittura" && S.ordine.includes(id)) return false;   // il suo turno è già in calendario
       const f = (Array.isArray(m.frasi) ? m.frasi : []).slice(0, 3).map(x => pulisci(x, MAX_FRASE));
       if (f.length !== 3 || f.some(x => !x)) return false;
       g.frasi = f;
-      if (S.fase !== "lobby") S.ordine.push(id);   // arrivato a partita iniziata: gioca in coda
+      if (S.fase !== "scrittura") S.ordine.push(id);   // arrivato a manche iniziata: gioca in coda
       return true;
     }
     case "voto": {
@@ -285,10 +320,9 @@ function azione(id, m) {
       return true;
     }
     case "inizia": {
-      if (!capo || S.fase !== "lobby") return false;
+      if (!capo || S.fase !== "scrittura") return false;
       const pronti = Object.keys(S.giocatori).filter(k => S.giocatori[k].frasi);
       if (pronti.length < 2) return false;
-      for (const k in S.giocatori) S.giocatori[k].punti = 0;
       S.ordine = mescola(pronti);
       S.turno = -1;
       avantiTurno();
@@ -302,10 +336,27 @@ function azione(id, m) {
       if (!capo || S.fase !== "svela") return false;
       avantiTurno();
       return true;
+    case "argomento": {   // nuova manche
+      if (!capo || S.fase !== "lobby") return false;
+      S.usati ??= [];
+      const liberi = ARGOMENTI.map((_, i) => i).filter(i => !S.usati.includes(i));
+      if (!liberi.length) return false;
+      let i = Number(m.i);
+      if (i === -1) i = liberi[Math.floor(Math.random() * liberi.length)];
+      if (!liberi.includes(i)) return false;
+      S.usati.push(i);
+      for (const k in S.giocatori) S.giocatori[k].frasi = null;
+      Object.assign(S, { fase: "scrittura", argomento: i, manche: (S.manche ?? 0) + 1, ordine: [], turno: -1, voti: {}, ordine_frasi: null });
+      return true;
+    }
+    case "termina":
+      if (!capo || S.fase !== "lobby" || !S.manche) return false;
+      S.fase = "fine";
+      return true;
     case "ancora":
       if (!capo || S.fase !== "fine") return false;
       for (const k in S.giocatori) { S.giocatori[k].frasi = null; S.giocatori[k].punti = 0; }
-      Object.assign(S, { fase: "lobby", ordine: [], turno: -1, voti: {}, ordine_frasi: null });
+      Object.assign(S, { fase: "lobby", ordine: [], turno: -1, voti: {}, ordine_frasi: null, manche: 0, argomento: null, usati: [] });
       return true;
     case "rimuovi": {
       if (!capo || m.id === mioId || online().has(m.id)) return false;
@@ -360,7 +411,7 @@ function avviaHost(salvato) {
   if (salvato) { S = salvato; codice = S.codice; }
   else {
     codice = nuovoCodice();
-    S = { codice, fase: "lobby", giocatori: {}, ordine: [], turno: -1, voti: {}, ordine_frasi: null };
+    S = { codice, fase: "lobby", giocatori: {}, ordine: [], turno: -1, voti: {}, ordine_frasi: null, manche: 0, argomento: null, usati: [] };
   }
   S.giocatori[mioId] ??= { nome: mioNome, frasi: null, punti: 0 };
   S.giocatori[mioId].nome = mioNome;
@@ -478,7 +529,8 @@ document.addEventListener("click", e => {
   else if (act === "annulla") { modifica = false; render(); }
   else if (act === "voto") invia({ t: "voto", i: +b.dataset.i });
   else if (act === "rimuovi") invia({ t: "rimuovi", id: b.dataset.id });
-  else if (["inizia", "svela", "avanti", "ancora"].includes(act)) invia({ t: act });
+  else if (["inizia", "svela", "avanti", "ancora", "termina"].includes(act)) invia({ t: act });
+  else if (act === "argomento") invia({ t: "argomento", i: +b.dataset.i });
   else if (act === "esci") esci();
   else if (act === "copia") {
     const url = linkInvito();
@@ -540,7 +592,7 @@ function renderHome() {
     </header>`);
   sezione("s-gioco", "home" + !!p + !!recente, () => `
     <div class="card">
-      <p>Ognuno scrive tre frasi su di sé: <b>due vere e una falsa</b>. A turno si leggono le frasi di un giocatore e gli altri, dal proprio telefono, votano quale secondo loro è la bugia.</p>
+      <p>Si gioca a manche, ognuna con un argomento (cibo, viaggi, figuracce…). Ognuno scrive tre frasi su di sé: <b>due vere e una falsa</b>. A turno si leggono le frasi di un giocatore e gli altri, dal proprio telefono, votano quale secondo loro è la bugia.</p>
       <p class="small muted">Chi scova la bugia prende 1 punto; chi scrive le frasi prende 1 punto per ogni persona che inganna.</p>
       <label for="nome">Il tuo nome</label>
       <input type="text" id="nome" maxlength="${MAX_NOME}" autocomplete="given-name" value="${esc(bozzaHome.nome)}" placeholder="Per esempio: Giulia">
@@ -565,30 +617,43 @@ function qrSvg(testo) {
 
 function renderGioco() {
   const v = vista;
+  const arg = v.argomento != null ? ARGOMENTI[v.argomento] : null;
   if (v.fase === "lobby") {
+    const prima = v.manche === 0;
     if (ruolo === "host") {
-      sezione("s-gioco", "invito" + codice, () => {
+      sezione("s-gioco", "lobby" + codice + JSON.stringify([v.manche, v.usati]), () => {
         const url = linkInvito();
         const msg = `Giochiamo a "Due verità e una bugia"! Entra qui: ${url}`;
         const qr = qrSvg(url);
-        return `<div class="card invito">
-          <h2 style="margin-top:0;text-shadow:none">Fai entrare gli altri</h2>
+        const invito = `
           <div class="big">${esc(codice)}</div>
           ${qr ? `<div class="qr">${qr}</div><p class="small muted">Inquadra il QR con la fotocamera, oppure:</p>` : ""}
           <div class="riga">
             <a class="btn verde" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>
             <button class="btn chiaro" data-act="copia">Copia link</button>
           </div>
-          <p class="small muted" style="margin-top:12px">Tieni questo telefono acceso con la pagina aperta: la partita vive qui.</p>
-        </div>`;
+          <p class="small muted" style="margin-top:12px">Tieni questo telefono acceso con la pagina aperta: la partita vive qui.</p>`;
+        const liberi = ARGOMENTI.map((_, i) => i).filter(i => !v.usati.includes(i));
+        const scelta = liberi.length ? `
+          <h2>${prima ? "Scegli il primo argomento" : `Argomento della manche ${v.manche + 1}`}</h2>
+          <button class="btn" data-act="argomento" data-i="-1">🎲 Estrai a caso</button>
+          <div class="argomenti">
+            ${ARGOMENTI.map((a, i) => `<button class="arg${v.usati.includes(i) ? " usato" : ""}" data-act="argomento" data-i="${i}" ${v.usati.includes(i) ? "disabled" : ""}>
+              <span class="emoji">${a.e}</span>${esc(a.n)}</button>`).join("")}
+          </div>` : `<div class="card"><p>Avete giocato tutti gli argomenti!</p></div>`;
+        return prima
+          ? `<div class="card invito"><h2 style="margin-top:0;text-shadow:none">Fai entrare gli altri</h2>${invito}</div>${scelta}`
+          : `${scelta}<details class="card invito" style="margin-top:16px"><summary>Fai entrare altri giocatori</summary>${invito}</details>`;
       });
     } else {
-      sezione("s-gioco", "attesa", `<div class="card"><p><b>Sei dentro!</b> Scrivi le tue frasi e aspetta che il capo partita faccia iniziare il gioco.</p></div>`);
+      sezione("s-gioco", "attesa" + v.manche, prima
+        ? `<div class="card"><p><b>Sei dentro!</b> Aspetta che il capo partita scelga l'argomento della prima manche.</p></div>`
+        : `<div class="card"><p><b>Fine della manche ${v.manche}!</b> Aspetta che il capo partita scelga il prossimo argomento.</p></div>`);
     }
     return;
   }
   if (v.fase === "fine") {
-    const cl = v.giocatori.filter(g => g.inGioco || g.punti).sort((a, b) => b.punti - a.punti);
+    const cl = v.giocatori.filter(g => g.punti || g.inGioco).sort((a, b) => b.punti - a.punti);
     const medaglie = ["🥇", "🥈", "🥉"];
     let pos = 0, prev = null;
     const righe = cl.map((g, i) => {
@@ -597,17 +662,29 @@ function renderGioco() {
     }).join("");
     sezione("s-gioco", "fine" + JSON.stringify(cl), `
       <h2>Classifica finale</h2>
+      <p class="muted">Dopo ${v.manche === 1 ? "1 manche" : v.manche + " manche"}.</p>
       <div class="card"><ul class="giocatori">${righe}</ul></div>`);
+    return;
+  }
+  const etichettaManche = `<span class="label">Manche ${v.manche} · ${arg.e} ${esc(arg.n)}</span>`;
+  if (v.fase === "scrittura") {
+    sezione("s-gioco", "scrittura" + v.manche, `
+      <div class="tema">
+        <div class="label">Manche ${v.manche}</div>
+        <div class="tema-emoji">${arg.e}</div>
+        <div class="big">${esc(arg.n)}</div>
+        <p>Scrivete due cose vere e una bugia su questo argomento.</p>
+      </div>`);
     return;
   }
 
   const t = v.turno;
   const sonoAutore = t.autore === v.io;
-  const testa = `<div><span class="label">Turno ${t.n} di ${t.tot}</span></div>`;
+  const testa = `<div class="etichette">${etichettaManche}<span class="label">Turno ${t.n} di ${t.tot}</span></div>`;
   if (v.fase === "voto") {
     const elettori = v.giocatori.filter(g => g.online && g.id !== t.autore);
     const fatti = elettori.filter(g => g.votato).length;
-    sezione("s-gioco", "voto" + JSON.stringify([t, v.mioVoto, fatti, elettori.length]), () => `
+    sezione("s-gioco", "voto" + JSON.stringify([v.manche, t, v.mioVoto, fatti, elettori.length]), () => `
       ${testa}
       <div class="domanda big">${sonoAutore ? "Queste sono le tue frasi: non tradirti!" : `Qual è la bugia di <b>${esc(t.nome)}</b>?`}</div>
       ${t.frasi.map((f, i) => `
@@ -630,7 +707,7 @@ function renderGioco() {
   else if (v.mioVoto == null) esito = `<div class="esito no">Non hai votato</div>`;
   else if (v.mioVoto === s.bugia) esito = `<div class="esito si">Hai scovato la bugia! +1</div>`;
   else esito = `<div class="esito no">Ti ha ingannato! +1 a ${esc(t.nome)}</div>`;
-  sezione("s-gioco", "svela" + JSON.stringify([t, s, v.mioVoto]), () => `
+  sezione("s-gioco", "svela" + JSON.stringify([v.manche, t, s, v.mioVoto]), () => `
     ${testa}
     <div class="domanda big">Le frasi di <b>${esc(t.nome)}</b></div>
     ${esito}
@@ -642,82 +719,94 @@ function renderGioco() {
       </div>`).join("")}`);
 }
 
+let bozzaManche = null;
 function renderFrasi() {
   const v = vista;
+  if (v.manche !== bozzaManche) {   // nuova manche: si riparte da zero
+    bozzaManche = v.manche;
+    if (!mieFrasi) { bozza = ["", "", ""]; modifica = false; }
+  }
   const io = v.giocatori.find(g => g.id === v.io);
-  const puoScrivere = v.fase === "lobby" || (v.fase !== "fine" && io && !io.inGioco);
+  const inCorso = v.fase === "voto" || v.fase === "svela";
+  const puoScrivere = v.fase === "scrittura" || (inCorso && io && !io.inGioco);
   if (!puoScrivere) return sezione("s-frasi", "no", "");
+  const arg = ARGOMENTI[v.argomento];
   if (mieFrasi && !modifica) {
-    return sezione("s-frasi", "mie" + JSON.stringify(mieFrasi) + v.fase, () => `
+    return sezione("s-frasi", "mie" + JSON.stringify(mieFrasi) + v.fase + v.manche, () => `
       <h2>Le tue frasi sono pronte ✓</h2>
       <div class="card">
         <ul class="mie">
           <li>✅ ${esc(mieFrasi[0])}</li><li>✅ ${esc(mieFrasi[1])}</li><li>❌ ${esc(mieFrasi[2])}</li>
         </ul>
-        ${v.fase === "lobby" ? `<button class="link" data-act="modifica" style="padding-left:0">Modifica</button>` : `<p class="small muted" style="margin-top:8px">Giocherai alla fine, dopo gli altri.</p>`}
+        ${v.fase === "scrittura" ? `<button class="link" data-act="modifica" style="padding-left:0">Modifica</button>` : `<p class="small muted" style="margin-top:8px">Giocherai alla fine della manche, dopo gli altri.</p>`}
       </div>`);
   }
   const form = () => `
     <div class="card">
-      <p class="small muted">Nessuno vedrà le tue frasi finché non arriva il tuo turno, e verranno mostrate in ordine casuale.</p>
-      <label for="f0">✅ Una cosa vera su di te</label>
-      <input type="text" id="f0" data-bozza="0" maxlength="${MAX_FRASE}" value="${esc(bozza[0])}" placeholder="Per esempio: ho tre gatti">
+      <p class="small muted">Argomento: <b>${arg.e} ${esc(arg.n)}</b>. Nessuno vedrà le tue frasi finché non arriva il tuo turno, e verranno mostrate in ordine casuale.</p>
+      <label for="f0">✅ Una cosa vera</label>
+      <textarea id="f0" data-bozza="0" maxlength="${MAX_FRASE}" rows="2" placeholder="Per esempio: ${esc(arg.es[0])}">${esc(bozza[0])}</textarea>
       <label for="f1">✅ Un'altra cosa vera</label>
-      <input type="text" id="f1" data-bozza="1" maxlength="${MAX_FRASE}" value="${esc(bozza[1])}" placeholder="Per esempio: sono stato in Islanda">
+      <textarea id="f1" data-bozza="1" maxlength="${MAX_FRASE}" rows="2" placeholder="Per esempio: ${esc(arg.es[1])}">${esc(bozza[1])}</textarea>
       <label for="f2">❌ Una bugia (che sembri vera!)</label>
-      <input type="text" id="f2" data-bozza="2" maxlength="${MAX_FRASE}" value="${esc(bozza[2])}" placeholder="Per esempio: so suonare la tromba">
+      <textarea id="f2" data-bozza="2" maxlength="${MAX_FRASE}" rows="2" placeholder="Per esempio: ${esc(arg.es[2])}">${esc(bozza[2])}</textarea>
       <button class="btn verde" data-act="frasi">${modifica ? "Salva" : "Fatto"}</button>
       ${modifica ? `<button class="link" data-act="annulla" style="padding-left:0;margin-top:6px">Annulla</button>` : ""}
     </div>`;
-  if (v.fase === "lobby") return sezione("s-frasi", "form" + modifica, () => `<h2>Le tue frasi</h2>${form()}`);
-  sezione("s-frasi", "tardi", () => `<details style="margin-top:20px"><summary>Vuoi giocare anche tu? Scrivi le tue frasi</summary>${form()}</details>`);
+  if (v.fase === "scrittura") return sezione("s-frasi", "form" + modifica + v.manche, () => `<h2>Le tue frasi</h2>${form()}`);
+  sezione("s-frasi", "tardi" + v.manche, () => `<details style="margin-top:20px"><summary>Vuoi giocare anche tu? Scrivi le tue frasi</summary>${form()}</details>`);
 }
 
 function renderLista() {
   const v = vista;
   if (v.fase === "fine") return sezione("s-lista", "no", "");
-  const ordinati = v.fase === "lobby" ? v.giocatori : v.giocatori.slice().sort((a, b) => b.punti - a.punti);
+  const conPunti = v.fase !== "lobby" || v.manche > 0;
+  const ordinati = conPunti ? v.giocatori.slice().sort((a, b) => b.punti - a.punti) : v.giocatori;
   const autore = v.turno?.autore;
   const puoRimuovere = ruolo === "host" && v.fase === "lobby";
   const righe = ordinati.map(g => {
-    let stato;
-    if (v.fase === "lobby") stato = g.pronto ? `<span class="stato ok">pronto ✓</span>` : `<span class="stato">sta scrivendo…</span>`;
+    let stato = "";
+    if (v.fase === "scrittura") stato = g.pronto ? `<span class="stato ok">pronto ✓</span>` : `<span class="stato">sta scrivendo…</span>`;
     else if (v.fase === "voto") stato = g.id === autore ? `<span class="stato">è il suo turno</span>` : g.votato ? `<span class="stato ok">ha votato ✓</span>` : `<span class="stato">…</span>`;
-    else stato = "";
     return `<li class="${g.online ? "" : "off"}">
       <span class="nome">${esc(g.nome)}${g.id === v.io ? " (tu)" : ""}${g.id === v.host ? " 👑" : ""}${g.online ? "" : " · non collegato"}</span>
       ${stato}
-      ${v.fase !== "lobby" ? `<span class="punti">${g.punti}</span>` : ""}
+      ${conPunti ? `<span class="punti">${g.punti}</span>` : ""}
       ${puoRimuovere && !g.online ? `<button class="x" data-act="rimuovi" data-id="${esc(g.id)}" aria-label="Togli ${esc(g.nome)}">✕</button>` : ""}
     </li>`;
   }).join("");
-  sezione("s-lista", "lista" + ruolo + JSON.stringify([v.fase, autore, ordinati]), `
-    <h2>${v.fase === "lobby" ? `Giocatori (${v.giocatori.length})` : "Punti"}</h2>
+  const titolo = v.fase === "lobby" ? (v.manche ? `Classifica dopo ${v.manche === 1 ? "1 manche" : v.manche + " manche"}` : `Giocatori (${v.giocatori.length})`)
+               : v.fase === "scrittura" ? `Giocatori (${v.giocatori.length})` : "Punti";
+  sezione("s-lista", "lista" + ruolo + titolo + JSON.stringify([v.fase, autore, ordinati]), `
+    <h2>${titolo}</h2>
     <div class="card"><ul class="giocatori">${righe}</ul></div>`);
 }
 
 function renderAzioni() {
   const v = vista;
   if (ruolo !== "host") {
-    const testo = v.fase === "svela" ? "Aspetta che il capo partita passi al prossimo turno."
+    const testo = v.fase === "scrittura" ? (mieFrasi ? "Aspetta che tutti abbiano scritto le loro frasi." : "")
+                : v.fase === "svela" ? "Aspetta che il capo partita passi al prossimo turno."
                 : v.fase === "fine" ? "Grazie per aver giocato!" : "";
     return sezione("s-azioni", "o" + testo, testo ? `<p class="small muted" style="text-align:center;margin-top:16px">${testo}</p>` : "");
   }
   let html = "";
   if (v.fase === "lobby") {
+    if (v.manche > 0) html = `<button class="btn chiaro" data-act="termina">Fine partita: classifica finale</button>`;
+  } else if (v.fase === "scrittura") {
     const pronti = v.giocatori.filter(g => g.pronto).length;
     const mancano = v.giocatori.filter(g => !g.pronto).map(g => g.nome);
-    html = `<button class="btn" data-act="inizia" ${pronti < 2 ? "disabled" : ""}>Inizia la partita</button>
+    html = `<button class="btn" data-act="inizia" ${pronti < 2 ? "disabled" : ""}>Si vota!</button>
       <p class="small muted" style="margin-top:8px">${pronti < 2 ? "Servono almeno 2 giocatori con le frasi pronte."
         : mancano.length ? `Senza frasi (potranno solo votare, o aggiungerle dopo): ${mancano.map(esc).join(", ")}.` : "Tutti pronti!"}</p>`;
   } else if (v.fase === "voto") {
     html = `<button class="btn" data-act="svela">Svela la bugia</button>`;
   } else if (v.fase === "svela") {
     const ultimo = v.turno.n >= v.turno.tot;
-    html = `<button class="btn" data-act="avanti">${ultimo ? "Classifica finale" : "Prossimo turno"}</button>`;
+    html = `<button class="btn" data-act="avanti">${ultimo ? "Fine della manche" : "Prossimo turno"}</button>`;
   } else {
-    html = `<button class="btn" data-act="ancora">Gioca ancora</button>
-      <p class="small muted" style="margin-top:8px">Stessi giocatori, frasi nuove.</p>`;
+    html = `<button class="btn" data-act="ancora">Nuova partita</button>
+      <p class="small muted" style="margin-top:8px">Stessi giocatori, punti azzerati.</p>`;
   }
   sezione("s-azioni", "h" + html, html);
 }
